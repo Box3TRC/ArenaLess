@@ -1,0 +1,103 @@
+{
+  "name": "arenaless",
+  "displayName": "arenaless",
+  "description": "Box3+TypeScript, just in the browser!",
+  "version": "0.0.1",
+  "publisher": "tobylai",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "browser": "./dist/web/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "arenaless.project.create",
+        "title": "ArenaLess: 创建ArenaLess项目"
+      },
+      {
+        "command": "arenaless.project.buildtest",
+        "title": "ArenaLess: 测试构建项目并输出构建到控制台(仅调试使用)"
+      },
+      {
+        "command": "arenaless.panel",
+        "title": "ArenaLess: 打开ArenaLess面板"
+      },
+      {
+        "command": "arenaless.dao3.login",
+        "title": "ArenaLess: Dao3登录"
+      },
+      {
+        "command": "arenaless.dao3.logout",
+        "title": "ArenaLess: Dao3登出"
+      },
+      {
+        "command": "arenaless.project.link",
+        "title": "ArenaLess: 链接扩展地图"
+      },
+      {
+        "command": "arenaless.project.buildNUpload",
+        "title": "ArenaLess: 构建并上传项目"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "ArenaLess Dao3 User",
+        "properties": {
+          "arenaless.dao3.user.userAgent": {
+            "type": "string",
+            "description": "第一步：设置浏览器用户代理，获取方式：https://passer-by.com/browser/"
+          },
+          "arenaless.dao3.user.userToken": {
+            "type": "string",
+            "description": "第二步：设置神岛账号Token，获取方式：https://code-api-pc.dao3.fun/auth/user"
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/extensionTests.js",
+    "pretest": "npm run compile-web",
+    "vscode:prepublish": "npm run package-web",
+    "compile-web": "npm run check-types && npm run lint && node esbuild.js",
+    "watch-web": "npm-run-all -p watch-web:*",
+    "watch-web:esbuild": "node esbuild.js --watch",
+    "watch-web:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package-web": "npm run check-types && npm run lint && node esbuild.js --production",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src --ext ts",
+    "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. ."
+  },
+  "devDependencies": {
+    "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
+    "@types/assert": "^1.5.10",
+    "@types/mocha": "^10.0.7",
+    "@types/vscode": "^1.92.0",
+    "@typescript-eslint/eslint-plugin": "^7.14.1",
+    "@typescript-eslint/parser": "^7.11.0",
+    "@vscode/test-web": "^0.0.55",
+    "assert": "^2.1.0",
+    "esbuild": "^0.21.5",
+    "eslint": "^8.57.0",
+    "glob": "^10.4.2",
+    "mocha": "^10.5.2",
+    "npm-run-all": "^4.1.5"
+  },
+  "dependencies": {
+    "@rainetian/esbuild-wasm-compiler": "^0.0.19",
+    "@types/node": "^22.2.0",
+    "esbuild-wasm": "^0.23.0",
+    "estree-walker": "^3.0.3",
+    "json5": "^2.2.3",
+    "path-browserify": "^1.0.1",
+    "relative": "^3.0.2",
+    "rollup-plugin-ts": "^3.4.5",
+    "typescript": "^5.5.4"
+  }
+}
