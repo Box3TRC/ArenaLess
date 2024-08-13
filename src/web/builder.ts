@@ -24,11 +24,26 @@ import path from "path-browserify";
   }
 })();
 
+async function toTypeScriptAPIReadable(tsconfig: any) {
+  let res: ts.CompilerOptions = {};
+  for (let key in tsconfig) {
+    if (
+      !["target", "moduleResolution", "module", "baseUrl", "rootDir"].includes(
+        key,
+      )
+    ) {
+      res[key] = tsconfig[key];
+    }
+  }
+  return res;
+}
+
 export async function build(
   fileList: Record<string, string>,
   entry: string,
   tsconfigRaw: string,
   logger,
+  dao3config?:any
 ) {
   // read paths
   let aliases = [], tsconfig;
@@ -37,15 +52,18 @@ export async function build(
     if (tsconfig.paths) {
       for (let key in tsconfig.paths) {
         // prob suffix
-        if(tsconfig.paths[key][0].startsWith("")){
-            tsconfig.paths[key][0] = tsconfig.paths[key][0].slice(2);
+        if (tsconfig.paths[key][0].startsWith("")) {
+          tsconfig.paths[key][0] = tsconfig.paths[key][0].slice(2);
         }
-        if(!tsconfig.paths[key][0].endsWith(".ts")&&!tsconfig.paths[key][0].endsWith(".js")){
-            if(fileList[`${tsconfig.paths[key][0]}.ts`]){
-                tsconfig.paths[key][0] = `${tsconfig.paths[key][0]}.ts`;
-            }else if(fileList[`${tsconfig.paths[key][0]}.js`]){
-                tsconfig.paths[key][0] = `${tsconfig.paths[key][0]}.js`;
-            }
+        if (
+          !tsconfig.paths[key][0].endsWith(".ts") &&
+          !tsconfig.paths[key][0].endsWith(".js")
+        ) {
+          if (fileList[`${tsconfig.paths[key][0]}.ts`]) {
+            tsconfig.paths[key][0] = `${tsconfig.paths[key][0]}.ts`;
+          } else if (fileList[`${tsconfig.paths[key][0]}.js`]) {
+            tsconfig.paths[key][0] = `${tsconfig.paths[key][0]}.js`;
+          }
         }
         aliases.push({
           find: key,
@@ -56,11 +74,16 @@ export async function build(
   }
   let newfileList = {};
   // load tsconfig compilerOptions to interface CompilerOptions
-  for(let key in fileList){
-    if(key.startsWith("dist/")){continue;}
-    newfileList[key] = ts.transpile(fileList[key],{target:ts.ScriptTarget.ESNext,paths:tsconfig?.paths});
+  const compilerOptions = await toTypeScriptAPIReadable(tsconfig);
+  Object.assign(compilerOptions, {
+    target: ts.ScriptTarget.ESNext,
+    paths: tsconfig.paths,
+  });
+  for (let key in fileList) {
+    if (key.startsWith("dist/")||key.startsWith(".log/")) {continue;}
+    newfileList[key] = ts.transpile(fileList[key], compilerOptions);
     console.log(key);
-}
+  }
   // logger.info(`fileList:${JSON.stringify(newfileList)}`);
   const rolled = await rollup({
     input: [entry],
@@ -72,30 +95,69 @@ export async function build(
         entries: aliases,
       }) as any,
       {
-        name:"a",
-        resolveId(source, importer, options) {
-            // logger.info(`resolveId:${source} ${importer} ${JSON.stringify(options)}`);
-            if(source.startsWith(".")){
-                source = path.join(path.dirname(importer),source).trim().replace("\x00virtual:","");
+        name: "url-resolver",
+        resolveId(source, importer) {
+          if(!dao3config?.ArenaLess?.experimental?.allowUrlImport===false){
+            logger.error("url import is not allowed! fallback to file system. (Please set ArenaLess.experimental.allowUrlImport to true in dao3.config.json)[default true]");
+            return;
+          }
+          if (
+            source[0] !== "." &&
+            (source.startsWith("/") || source.startsWith("http://") ||
+              source.startsWith("https://"))
+          ) {
+            try {
+              new URL(source);
+              // If it is a valid URL, return it
+              return source;
+            } catch {
+              // Otherwise make it external
+              try {
+                new URL(source,importer);
+                // If it is a valid URL, return it
+                return new URL(source,importer).href;
+              } catch {
+                // Otherwise make it external
+                return;
+              }
             }
-            // file prob
-            if(!source.endsWith(".ts")&&!source.endsWith(".js")){
-                if(newfileList[`${source}.ts`]){
-                    source = `${source}.ts`;
-                    console.log("added ts");
-                }else if(newfileList[`${source}.js`]){
-                    source = `${source}.js`;
-                }
-            }
-            // logger.info(`resolveId solved:${source}`);
-            return "\x00virtual:"+source;
+          }
         },
-      },{
-        name:"esbuild-minify",
-        async renderChunk(code,chunk){
-          return (await esbuild.transform(code, { minify: true, loader: "js" })).code;
-        }
-      }
+        async load(id) {
+          const response = await fetch(id);
+          return response.text();
+        },
+      },
+      {
+        name: "virtual-resolver",
+        resolveId(source, importer, options) {
+          // logger.info(`resolveId:${source} ${importer} ${JSON.stringify(options)}`);
+          if (source.startsWith(".")) {
+            source = path.join(path.dirname(importer), source).trim().replace(
+              "\x00virtual:",
+              "",
+            );
+          }
+          // file prob
+          if (!source.endsWith(".ts") && !source.endsWith(".js")) {
+            if (newfileList[`${source}.ts`]) {
+              source = `${source}.ts`;
+              console.log("added ts");
+            } else if (newfileList[`${source}.js`]) {
+              source = `${source}.js`;
+            }
+          }
+          // logger.info(`resolveId solved:${source}`);
+          return "\x00virtual:" + source;
+        },
+      },
+      {
+        name: "esbuild-minify",
+        async renderChunk(code, chunk) {
+          return (await esbuild.transform(code, { minify: true, loader: "js" }))
+            .code;
+        },
+      },
     ],
   });
   // ts

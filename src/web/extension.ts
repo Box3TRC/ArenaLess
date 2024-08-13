@@ -150,7 +150,7 @@ export function activate(context: vscode.ExtensionContext) {
       let folder = await chooseWorkspace();
       if (!folder) return;
       try {
-        let res=await buildProject(folder.uri);
+        let res = await buildProject(folder.uri);
         logger.info(res.server_bundle);
         logger.info(res.client_bundle);
       } catch (e) {
@@ -168,9 +168,9 @@ export function activate(context: vscode.ExtensionContext) {
           ? `(ID:${usercache.userId})${usercache.nickname}`
           : "登录神岛账号"
       ] = "arenaless.dao3.login";
-      menu["创建ArenaLess项目"]="arenaless.project.create";
+      menu["创建ArenaLess项目"] = "arenaless.project.create";
       menu["链接扩展地图"] = "arenaless.project.link";
-      menu["构建并上传"]="arenaless.project.buildNUpload";
+      menu["构建并上传"] = "arenaless.project.buildNUpload";
       let act = await vscode.window.showQuickPick(Object.keys(menu), {
         placeHolder: "请选择操作",
       });
@@ -305,7 +305,7 @@ export function activate(context: vscode.ExtensionContext) {
         logger?.show();
         vscode.window.showInformationMessage("构建中……");
         let startTime = Date.now();
-        let buildRes:any;
+        let buildRes: any;
         try {
           buildRes = await buildProject(folder.uri);
         } catch (e) {
@@ -314,14 +314,20 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
         // upload
-        try{
-          let success=await user.uploadBuild(id.toString(),buildRes.server_bundle,buildRes.client_bundle);
-          if(success){
-            vscode.window.showInformationMessage("上传成功，耗时"+(Date.now()-startTime)+"ms");
-          }else{
+        try {
+          let success = await user.uploadBuild(
+            id.toString(),
+            buildRes.server_bundle,
+            buildRes.client_bundle,
+          );
+          if (success) {
+            vscode.window.showInformationMessage(
+              "上传成功，耗时" + (Date.now() - startTime) + "ms",
+            );
+          } else {
             vscode.window.showErrorMessage("上传失败，请查看输出");
           }
-        }catch(e){
+        } catch (e) {
           logger?.error(e);
         }
       },
@@ -360,17 +366,22 @@ export async function walk(folder: vscode.Uri): Promise<string[]> {
   }
   return list;
 }
-async function walkDirectory(folder:vscode.Uri):Promise<Record<string,string>> {
-  let list=await walk(folder);
-  let res={};
-  for(let name of list){
+async function walkDirectory(
+  folder: vscode.Uri,
+): Promise<Record<string, string>> {
+  let list = await walk(folder);
+  let res = {};
+  for (let name of list) {
     // logger.info(name);
-    name=path.relative(folder.path,name);
-    res[name]=new TextDecoder().decode(await vscode.workspace.fs.readFile(folder.with({path:path.join(folder.path,name)})));
+    name = path.relative(folder.path, name);
+    res[name] = new TextDecoder().decode(
+      await vscode.workspace.fs.readFile(
+        folder.with({ path: path.join(folder.path, name) }),
+      ),
+    );
   }
   return res;
 }
-
 
 // function pathJoin(...paths: string[]): string {
 //   return paths.filter(Boolean).join("/");
@@ -388,7 +399,7 @@ async function buildProject(workspaceUri: vscode.Uri) {
   // if (!serverEntry.startsWith("/")) serverEntry = "/" + serverEntry;
   logger.info("serverPath:" + serverPath + " serverEntry:" + serverEntry);
   let serverFiles_ = await walkDirectory(
-    workspaceUri.with({ path: path.join(workspaceUri.path,serverPath) }),
+    workspaceUri.with({ path: path.join(workspaceUri.path, serverPath) }),
   );
   // add a "/" before them
   let serverFiles: Record<string, string> = {};
@@ -401,7 +412,9 @@ async function buildProject(workspaceUri: vscode.Uri) {
   let serverBundle = await build(
     serverFiles,
     serverEntry,
-    serverFiles["tsconfig.json"],logger
+    serverFiles["tsconfig.json"],
+    logger,
+    dao3Conf,
   );
   // logger.info(`serverBundle:${serverBundle}`);
   // client(the same!)
@@ -410,7 +423,7 @@ async function buildProject(workspaceUri: vscode.Uri) {
   // if (!clientEntry.startsWith("/")) clientEntry = "/" + clientEntry;
   logger.info("clientPath:" + clientPath + " clientEntry:" + clientEntry);
   let clientFiles_ = await walkDirectory(
-    workspaceUri.with({ path: path.join(workspaceUri.path ,clientPath) }),
+    workspaceUri.with({ path: path.join(workspaceUri.path, clientPath) }),
   );
   let clientFiles: Record<string, string> = {};
   for (let key in clientFiles_) {
@@ -419,7 +432,9 @@ async function buildProject(workspaceUri: vscode.Uri) {
   let clientBundle = await build(
     clientFiles,
     clientEntry,
-    clientFiles["tsconfig.json"],logger
+    clientFiles["tsconfig.json"],
+    logger,
+    dao3Conf,
   );
   // logger.info(`clientBundle:${clientBundle}`);
   return {
