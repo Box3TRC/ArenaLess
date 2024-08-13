@@ -11,7 +11,8 @@
     "Other"
   ],
   "activationEvents": [
-    "*"
+    "onCommand",
+    "workspaceContains:dao3.config.json"
   ],
   "browser": "./dist/web/extension.js",
   "contributes": {
@@ -97,5 +98,9 @@
     "path-browserify": "^1.0.1",
     "rollup": "^4.20.0",
     "typescript": "^5.5.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Box3TRC/ArenaLess"
   }
 }
