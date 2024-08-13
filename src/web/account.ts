@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from "vscode";
 export class Dao3Account {
   token: string;
@@ -92,6 +93,6 @@ export class Dao3Account {
     );
     let data = await resp.json();
     this.logger.info(data);
-    return data.code==200;
+    return data.code===200;
   }
 }

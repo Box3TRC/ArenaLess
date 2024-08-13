@@ -152,7 +152,7 @@ export function activate(context: vscode.ExtensionContext) {
       try {
         let res=await buildProject(folder.uri);
         logger.info(res.server_bundle);
-        logger.info(res.client_bundle)
+        logger.info(res.client_bundle);
       } catch (e) {
         logger?.error(e);
       }
@@ -168,7 +168,7 @@ export function activate(context: vscode.ExtensionContext) {
           ? `(ID:${usercache.userId})${usercache.nickname}`
           : "登录神岛账号"
       ] = "arenaless.dao3.login";
-      menu["创建ArenaLess项目"]="arenaless.project.create"
+      menu["创建ArenaLess项目"]="arenaless.project.create";
       menu["链接扩展地图"] = "arenaless.project.link";
       menu["构建并上传"]="arenaless.project.buildNUpload";
       let act = await vscode.window.showQuickPick(Object.keys(menu), {
@@ -218,7 +218,7 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
       let pickeddata = extMaps.find((map) =>
-        map.id.toString() == picked.description
+        map.id.toString() === picked.description
       );
       // write to dao3.config.json
       let playHash = pickeddata.playHash,
@@ -305,9 +305,9 @@ export function activate(context: vscode.ExtensionContext) {
         logger?.show();
         vscode.window.showInformationMessage("构建中……");
         let startTime = Date.now();
-        let build_res:any;
+        let buildRes:any;
         try {
-          build_res = await buildProject(folder.uri);
+          buildRes = await buildProject(folder.uri);
         } catch (e) {
           vscode.window.showErrorMessage("构建失败，请查看输出");
           logger?.error(e);
@@ -315,7 +315,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
         // upload
         try{
-          let success=await user.uploadBuild(id.toString(),build_res.server_bundle,build_res.client_bundle);
+          let success=await user.uploadBuild(id.toString(),buildRes.server_bundle,buildRes.client_bundle);
           if(success){
             vscode.window.showInformationMessage("上传成功，耗时"+(Date.now()-startTime)+"ms");
           }else{
@@ -366,7 +366,7 @@ async function walkDirectory(folder:vscode.Uri):Promise<Record<string,string>> {
   for(let name of list){
     // logger.info(name);
     name=path.relative(folder.path,name);
-    res[name]=new TextDecoder().decode(await vscode.workspace.fs.readFile(folder.with({path:path.join(folder.path,name)})))
+    res[name]=new TextDecoder().decode(await vscode.workspace.fs.readFile(folder.with({path:path.join(folder.path,name)})));
   }
   return res;
 }
@@ -405,7 +405,7 @@ async function buildProject(workspaceUri: vscode.Uri) {
   );
   // logger.info(`serverBundle:${serverBundle}`);
   // client(the same!)
-  let clientPath = dao3Conf.ArenaPro.file.typescript.client.base
+  let clientPath = dao3Conf.ArenaPro.file.typescript.client.base;
   let clientEntry = dao3Conf.ArenaPro.file.typescript.client.entry;
   // if (!clientEntry.startsWith("/")) clientEntry = "/" + clientEntry;
   logger.info("clientPath:" + clientPath + " clientEntry:" + clientEntry);
@@ -423,7 +423,9 @@ async function buildProject(workspaceUri: vscode.Uri) {
   );
   // logger.info(`clientBundle:${clientBundle}`);
   return {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     server_bundle: serverBundle,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     client_bundle: clientBundle,
   };
 }

@@ -1,10 +1,10 @@
 import { rollup } from "./rollup-browser";
-import esbuild from "esbuild-wasm"
+import esbuild from "esbuild-wasm";
 import virtual from "./plugin-virtual";
 import alias from "./plugin-alias";
 import * as JSON5 from "json5";
-import ts from "typescript"
-import path from "path-browserify"
+import ts from "typescript";
+import path from "path-browserify";
 // import tsconfigload from "tsconfig"
 // import ts from "rollup-plugin-ts/dist/esm/index"
 
@@ -38,13 +38,13 @@ export async function build(
       for (let key in tsconfig.paths) {
         // prob suffix
         if(tsconfig.paths[key][0].startsWith("")){
-            tsconfig.paths[key][0] = tsconfig.paths[key][0].slice(2)
+            tsconfig.paths[key][0] = tsconfig.paths[key][0].slice(2);
         }
         if(!tsconfig.paths[key][0].endsWith(".ts")&&!tsconfig.paths[key][0].endsWith(".js")){
             if(fileList[`${tsconfig.paths[key][0]}.ts`]){
-                tsconfig.paths[key][0] = `${tsconfig.paths[key][0]}.ts`
+                tsconfig.paths[key][0] = `${tsconfig.paths[key][0]}.ts`;
             }else if(fileList[`${tsconfig.paths[key][0]}.js`]){
-                tsconfig.paths[key][0] = `${tsconfig.paths[key][0]}.js`
+                tsconfig.paths[key][0] = `${tsconfig.paths[key][0]}.js`;
             }
         }
         aliases.push({
@@ -57,9 +57,9 @@ export async function build(
   let newfileList = {};
   // load tsconfig compilerOptions to interface CompilerOptions
   for(let key in fileList){
-    if(key.startsWith("dist/"))continue;
-    newfileList[key] = ts.transpile(fileList[key],{target:ts.ScriptTarget.ESNext,paths:tsconfig?.paths})
-    console.log(key)
+    if(key.startsWith("dist/")){continue;}
+    newfileList[key] = ts.transpile(fileList[key],{target:ts.ScriptTarget.ESNext,paths:tsconfig?.paths});
+    console.log(key);
 }
   // logger.info(`fileList:${JSON.stringify(newfileList)}`);
   const rolled = await rollup({
@@ -81,10 +81,10 @@ export async function build(
             // file prob
             if(!source.endsWith(".ts")&&!source.endsWith(".js")){
                 if(newfileList[`${source}.ts`]){
-                    source = `${source}.ts`
-                    console.log("added ts")
+                    source = `${source}.ts`;
+                    console.log("added ts");
                 }else if(newfileList[`${source}.js`]){
-                    source = `${source}.js`
+                    source = `${source}.js`;
                 }
             }
             // logger.info(`resolveId solved:${source}`);

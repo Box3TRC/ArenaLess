@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "publisher": "tobylai",
   "engines": {
-    "vscode": "^1.92.0"
+    "vscode": "^1.80.0"
   },
   "categories": [
     "Other"
@@ -78,7 +78,7 @@
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@types/assert": "^1.5.10",
     "@types/mocha": "^10.0.7",
-    "@types/vscode": "^1.92.0",
+    "@types/vscode": "^1.80.0",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.11.0",
     "@vscode/test-web": "^0.0.55",
@@ -90,14 +90,12 @@
     "npm-run-all": "^4.1.5"
   },
   "dependencies": {
-    "@rainetian/esbuild-wasm-compiler": "^0.0.19",
     "@types/node": "^22.2.0",
     "esbuild-wasm": "^0.23.0",
     "estree-walker": "^3.0.3",
     "json5": "^2.2.3",
     "path-browserify": "^1.0.1",
-    "relative": "^3.0.2",
-    "rollup-plugin-ts": "^3.4.5",
+    "rollup": "^4.20.0",
     "typescript": "^5.5.4"
   }
 }
