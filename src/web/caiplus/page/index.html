@@ -1,0 +1,242 @@
+<!doctype html>
+<html class="mdui-theme-dark" lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.5, maximum-scale=0.5, shrink-to-fit=no" />
+    <meta name="renderer" content="webkit" />
+    <link rel="stylesheet" href="%assets%/d.tobylai.fun/css/font-material-icon-filled/MaterialIconFilled.css">
+    <link rel="stylesheet" href="%assets%/unpkg.com/mdui@2/mdui.css">
+    <!-- <link rel="stylesheet"   href="%assets%/unpkg.com/katex@0.16.11/dist/katex.min.css"> -->
+    <script src="%assets%/unpkg.com/mdui@2/mdui.global.js" nonce="%nonce%"></script>
+    <link rel="stylesheet" href="%assets%/prism.css">
+    <!-- <script src="%assets%/unpkg.com/showdown/dist/showdown.min.js" nonce="%nonce%"></script> -->
+    <!-- 如果使用了组件的 icon 属性，还需要引入图标的 CSS 文件 -->
+    <title>菜鸡bot plus</title>
+    <style>
+        /* .mdui-prose h1,h2,h3,h4,h5,h6,p{
+            margin-bottom: 0px !important;
+        } */
+        .mdui-prose h1 {
+            margin-bottom: 0px !important;
+        }
+
+        .mdui-prose h2 {
+            margin-bottom: 0px !important;
+        }
+
+        .mdui-prose h3 {
+            margin-bottom: 0px !important;
+        }
+
+        .mdui-prose h4 {
+            margin-bottom: 0px !important;
+        }
+
+        .mdui-prose h5 {
+            margin-bottom: 0px !important;
+        }
+
+        .mdui-prose h6 {
+            margin-bottom: 0px !important;
+        }
+
+        .mdui-prose p {
+            margin-bottom: 0px !important;
+        }
+
+        .mdui-prose hr {
+            margin-top: 0px !important;
+        }
+    </style>
+    <style>
+        /*禁用mdui对code的样式，因为它干扰了prism.js*/
+        pre code {
+            background-color: transparent !important;
+            padding: 0px 0px !important;
+        }
+    </style>
+</head>
+
+<body style="zoom:0.7;">
+    <mdui-top-app-bar>
+        <mdui-top-app-bar-title>菜鸡bot plus</mdui-top-app-bar-title>
+    </mdui-top-app-bar>
+    <mdui-layout>
+        <mdui-layout-main class="example-layout-main">
+            <div id="chat-history" style="width: 100%;padding-bottom: 200px;font-size: 18px;"></div>
+        </mdui-layout-main>
+    </mdui-layout>
+    <div
+        style="position: fixed; bottom: 0px;left: 0px; width: 100%;background-color: rgb(var(--mdui-color-surface-container));border-top-left-radius: 16px;border-top-right-radius: 16px;">
+        <div style="display: flex;position: fixed; bottom: 150px;justify-content: center;width: 100%;">
+            <mdui-button onclick="stop()" icon="stop" id="stop-btn">停止回答</mdui-button>
+        </div>
+        <mdui-card style="width: 100%;" id="ask_code_panel">
+            <div style="display: flex;flex-direction: row;margin: 4px;">
+                <span style="font-size: 16px;">携带以下代码提问：</span>
+                <div style="flex-grow: 1;"></div>
+                <mdui-button-icon icon="close" onclick="cancelAskWithCode();"></mdui-button-icon>
+            </div>
+            <pre><code class="language-typescript" id="ask_code"></code></pre>
+        </mdui-card>
+        <div style="display: flex;flex-direction: row;">
+            <mdui-radio-group value="typescript" id="code_language">
+                <mdui-radio value="javascript">JavaScript</mdui-radio>
+                <mdui-radio value="typescript">TypeScript</mdui-radio>
+            </mdui-radio-group>
+            <div style="flex-grow: 1;"></div>
+            <mdui-dropdown>
+                <mdui-button-icon icon="more_vert" slot="trigger"></mdui-button-icon>
+                <mdui-menu>
+                    <mdui-menu-item icon="delete" onclick="clearHistory();">清空历史记录</mdui-menu-item>
+                </mdui-menu>
+            </mdui-dropdown>
+        </div>
+        <mdui-text-field rows="2" counter maxlength="500" class="chat_box" variant="outlined" id="input"
+            placeholder="请输入您的问题" style="width: 100%;border: 0px;">
+            <mdui-button id="sendbtn" slot="end-icon" onclick="sendQuestion()" end-icon="send">发送</mdui-button>
+        </mdui-text-field>
+    </div>
+</body>
+<script src="%assets%/prism.js" nonce="%nonce%"></script>
+<!-- <script   src="%assets%/unpkg.com/katex@0.16.11/dist/katex.min.js" nonce="%nonce%"></script> -->
+<script src="%assets%/unpkg.com/dompurify@3.1.6/dist/purify.min.js" nonce="%nonce%"></script>
+<script src="%assets%/unpkg.com/marked@13.0.2/marked.min.js" nonce="%nonce%"></script>
+<!-- <script   defer src="%assets%/unpkg.com/katex@0.16.11/dist/contrib/auto-render.min.js" nonce="%nonce%"></script> -->
+<script src="%assets%/unpkg.com/marked-katex-extension@5.0.2/lib/index.umd.js" nonce="%nonce%"></script>
+<script>
+    const $ = mdui.$;
+    $("#stop-btn").hide();
+    $("#ask_code_panel").hide();
+    window.addEventListener("message", (ev) => {
+        let data = ev.data;
+        if (data.action == "ask_with_code") {
+            let code = data.code;
+            $("#ask_code").text(code);
+            $("#ask_code_panel").show();
+            Prism.highlightAll($("#ask_code_panel").get(0));
+        }
+    })
+    // 转义文本以不被markdown解析
+    function escapeMarkdown(text) {
+        return text.replace(/[\\`*_{}[\]()#+\-.!]/g, '\\$&');
+    }
+    var ws;
+    marked.use({
+        breaks: true,
+    })
+    function cancelAskWithCode() {
+        $("#ask_code_panel").hide();
+        $("#ask_code").text("")
+    }
+    function toHTML(str) {
+        setTimeout(() => {
+            // renderMathInElement(document.querySelector("#chat-history"), {
+            //     // customised options
+            //     // • auto-render specific keys, e.g.:
+            //     delimiters: [
+            //         { left: '$$', right: '$$', display: true },
+            //         { left: '$', right: '$', display: false },
+            //         { left: '\\(', right: '\\)', display: false },
+            //         { left: '\\[', right: '\\]', display: true },
+            //         { left: '( ', right: ' )', display: false },
+            //         { left: '[ ', right: ' ]', display: true },
+            //         { left: '[\n', right: '\n]', display: true }
+            //     ],
+            //     // • rendering keys, e.g.:
+            //     throwOnError: false,
+            // });
+            Prism.highlightAll(document.querySelector("#chat-history"));
+        }, 100)
+        return DOMPurify.sanitize(marked.parse(str));
+    }
+    function stop() {
+        ws.close();
+    }
+    let history = [];
+    function clearHistory() {
+        history = [];
+        $("#chat-history").html("");
+    }
+    function addHistoryCard(item) {
+        let rnd = Math.random().toFixed(16).slice(2);
+        $("#chat-history").append(`<div style="display: flex;justify-content:${item.role == 'assistant' ? 'left' : 'right'};">
+                    <mdui-card variant="filled"
+                        style="max-width: 90%;padding-bottom:0px;padding:5px;border-top-${item.role == 'assistant' ? 'left' : 'right'}-radius:0;${item.role == 'assistant' ? '' : 'background-color: rgb(var(--mdui-color-primary-light))'}">
+                        <span id="card-${rnd}" class="mdui-prose">${item.role == 'assistant' ? toHTML(item.content) : item.content}</span>
+                    </mdui-card>
+                </div>${item.role == 'assistant' ? `<span id="source-${rnd}"></span>` : ''}<br>`)
+        return `${rnd}`;
+    }
+    function addHistory(item, addCard = true) {
+        history.push(item);
+        if (addCard) addHistoryCard(item);
+    }
+    async function sendQuestion() {
+        let question = $("#input").val();
+        if (question.trim().length == 0) return;
+        let ask_code = $("#ask_code").text();
+        $("#ask_code").text("");
+        $("#ask_code_panel").hide();
+        // history.push(question);
+        $("#input").val("");
+        if (ask_code) {
+            question = `用户提问问题，并携带以下代码：\n\`\`\`typescript\n${ask_code}\n\`\`\`\n\n以下是用户的问题：\n` + question;
+        }
+        let useritem = { role: 'user', content: question };
+        let usercardid = addHistoryCard(useritem);
+        $(`#card-${usercardid}`).html(toHTML(question));
+        item = { role: 'assistant', content: "正在请求中..." };
+        let ai_id = addHistoryCard(item);
+        let text = "";
+        // let proc = window.location.protocol == 'https:' ? 'wss' : 'ws';
+        ws = new WebSocket(`wss://caiplus.trc.tobylai.fun/api/ws`);
+        $("#sendbtn").attr("disabled", "disabled");
+        ws.onerror = function () {
+            $(`#card-${ai_id}`).html("请求失败，请重试");
+            $("#sendbtn").removeAttr("disabled");
+        }
+        ws.onopen = function () {
+            ws.send(JSON.stringify({
+                question: question,
+                history: history,
+                code_language: $("#code_language").val()
+            }))
+            $("#stop-btn").show();
+        }
+        ws.onmessage = function (e) {
+            let data = JSON.parse(e.data);
+            if (data.type == "sources") {
+                let sources = data.sources;
+                let html = "";
+                sources.forEach(s => {
+                    if (s.url != "")
+                        html += `<mdui-menu-item href="${s.url}" target="_blank" end-icon="open_in_new">${s.source}</mdui-menu-item>`
+                    else html += `<mdui-menu-item>${s.source}</mdui-menu-item>`
+                });
+                $(`#source-${ai_id}`).html(`<mdui-dropdown>
+  <mdui-button slot="trigger" variant="text" end-icon="double_arrow">查看资料来源</mdui-button>
+  <mdui-menu style="max-width:450px;">${html}</mdui-menu>
+</mdui-dropdown>`)
+            } else if (data.type == "chunk") {
+                text += data.text;
+                $(`#card-${ai_id}`).html(toHTML(text));
+            } else if (data.type == "end") {
+                console.log(text)
+                ws.close();
+                addHistory(useritem, false);
+                addHistory({ role: 'assistant', content: text }, false);
+            }
+        }
+        ws.onclose = function () {
+            $("#sendbtn").removeAttr("disabled");
+            if (text.length == 0) {
+                $(`#card-${ai_id}`).html("请求超时，请重试");
+            }
+            $("#stop-btn").hide();
+        }
+    }
+</script>
+
+</html>

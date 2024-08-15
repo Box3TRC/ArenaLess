@@ -2,9 +2,11 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-import { build } from "./builder";
+import { build } from "./builder/builder";
 import * as path from "path-browserify";
 import { Dao3Account } from "./account";
+import { ChatWebViewProvider } from "./caiplus/webview";
+import {ungzip} from "pako";
 // import * as relative from "relative";
 
 let logger: vscode.LogOutputChannel | undefined;
@@ -26,7 +28,7 @@ async function chooseWorkspace(): Promise<vscode.WorkspaceFolder | undefined> {
 }
 
 const TEMPLATE_CONFIG: Record<string, string[]> = {
-  base: ["base.json"],
+  base: ["base.json.gzip"],
 };
 async function copyTemplate(
   context: vscode.ExtensionContext,
@@ -39,7 +41,7 @@ async function copyTemplate(
       path: tplPathUri.path + `/src/web/project-templates/${dir}`,
     });
     // read json
-    let data = await vscode.workspace.fs.readFile(tplPathUri);
+    let data = ungzip(await vscode.workspace.fs.readFile(tplPathUri));
     let files = JSON.parse(new TextDecoder().decode(data)); //{filepath:text,"aaa/bbb/ccc.txt":"hello"}
     for (let filepath in files) {
       let filepathUri = workspaceUri.with({
@@ -97,11 +99,17 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.StatusBarAlignment.Right,
     Infinity,
   );
+  // context.logger=logger;
   statusBarIcon.text = "AL";
   statusBarIcon.tooltip = "ArenaLess(未登录)";
   statusBarIcon.command = "arenaless.panel";
   statusBarIcon.backgroundColor = new vscode.ThemeColor("statusBar.background");
   statusBarIcon.show();
+
+  // sidebar panel
+  const webviewProvider=new ChatWebViewProvider(context,logger);
+  let opt={webviewOptions:{retainContextWhenHidden: true}};
+  vscode.window.registerWebviewViewProvider("caiplusaichat",webviewProvider,opt);
   let testLogin = async (message = false) => {
     if (await login()) {
       logger.info("登录成功");
@@ -333,6 +341,17 @@ export function activate(context: vscode.ExtensionContext) {
       },
     ),
   );
+  context.subscriptions.push(vscode.commands.registerCommand("arenaless.caiplus.ask_with_code",async()=>{
+    webviewProvider.show();
+    // get text editor selection
+    let editor=vscode.window.activeTextEditor;
+    let doc=editor.document;
+    let text=doc.getText(editor.selection);
+    webviewProvider.sendMessage({
+      "code": text,
+      "action":"ask_with_code"
+    });
+  }));
 }
 
 // async function getFileContent(uri: vscode.Uri): Promise<string> {
@@ -393,6 +412,7 @@ async function buildProject(workspaceUri: vscode.Uri) {
   let res = await walkDirectory(workspaceUri);
   // logger.info(JSON.stringify(res))
   let dao3Conf = JSON.parse(res["dao3.config.json"]);
+  let importMap=res["importMap.arenaless.jsonc"];
   // server build
   let serverPath = dao3Conf.ArenaPro.file.typescript.server.base;
   let serverEntry = dao3Conf.ArenaPro.file.typescript.server.entry;
@@ -415,6 +435,8 @@ async function buildProject(workspaceUri: vscode.Uri) {
     serverFiles["tsconfig.json"],
     logger,
     dao3Conf,
+    "cjs",
+    importMap
   );
   // logger.info(`serverBundle:${serverBundle}`);
   // client(the same!)
@@ -435,6 +457,8 @@ async function buildProject(workspaceUri: vscode.Uri) {
     clientFiles["tsconfig.json"],
     logger,
     dao3Conf,
+    "es",
+    importMap
   );
   // logger.info(`clientBundle:${clientBundle}`);
   return {

@@ -43,12 +43,18 @@ export async function build(
   entry: string,
   tsconfigRaw: string,
   logger,
-  dao3config?:any
+  dao3config?: any,
+  format: "es" | "cjs" = "cjs",
+  importMap?: string | undefined,
 ) {
   // read paths
   let aliases = [], tsconfig;
   if (tsconfigRaw) {
-    tsconfig = JSON5.parse(tsconfigRaw).compilerOptions;
+    try {
+      tsconfig = JSON5.parse(tsconfigRaw).compilerOptions;
+    } catch (e) {
+      throw new Error(`tsconfig读取出错！${e}`);
+    }
     if (tsconfig.paths) {
       for (let key in tsconfig.paths) {
         // prob suffix
@@ -72,33 +78,68 @@ export async function build(
       }
     }
   }
+  if (importMap) {
+    let importMapJSON: any;
+    try {
+      importMapJSON = JSON5.parse(importMap);
+      // add to alias
+      for(let key in importMapJSON.imports){
+        aliases.push({
+          find: key,
+          replacement: importMapJSON.imports[key],
+        });
+      }
+    } catch (e) {
+      throw new Error(`importMap读取出错！${e}`);
+    }
+  }
+
   let newfileList = {};
   // load tsconfig compilerOptions to interface CompilerOptions
-  const compilerOptions = await toTypeScriptAPIReadable(tsconfig);
+  let compilerOptions = await toTypeScriptAPIReadable(tsconfig);
   Object.assign(compilerOptions, {
     target: ts.ScriptTarget.ESNext,
     paths: tsconfig.paths,
   });
   for (let key in fileList) {
-    if (key.startsWith("dist/")||key.startsWith(".log/")) {continue;}
+    if (key.startsWith("dist/") || key.startsWith(".log/")) {continue;}
     newfileList[key] = ts.transpile(fileList[key], compilerOptions);
-    console.log(key);
   }
   // logger.info(`fileList:${JSON.stringify(newfileList)}`);
   const rolled = await rollup({
     input: [entry],
     plugins: [
-      virtual({
-        ...newfileList,
-      }) as any,
       alias({
         entries: aliases,
       }) as any,
+      virtual({
+        ...newfileList,
+      }) as any,
+      {
+        name:"specifier-resolver",
+        resolveId(source,importer){
+          if(source.startsWith(".")){return;}
+          if(source.startsWith("\x00virtual:")){return;}
+          if(source.startsWith("http://") || source.startsWith("https://")){return;}
+          let regex=/^([a-zA-Z0-9_]+):(.+)$/;
+          if(!regex.test(source)){return;}
+          let res=source.match(regex);
+          let specifier=res[1],arg=res[2];
+          if(specifier==="npm"){
+            return `https://esm.sh/${arg}`;
+          }else if(specifier==="jsr"){
+            return `https://esm.sh/jsr/${arg}`;
+          }
+          return;
+        }
+      },
       {
         name: "url-resolver",
         resolveId(source, importer) {
-          if(!dao3config?.ArenaLess?.experimental?.allowUrlImport===false){
-            logger.error("url import is not allowed! fallback to file system. (Please set ArenaLess.experimental.allowUrlImport to true in dao3.config.json)[default true]");
+          if (!dao3config?.ArenaLess?.experimental?.allowUrlImport === false) {
+            logger.error(
+              "url import is not allowed! fallback to file system. (Please set ArenaLess.experimental.allowUrlImport to true in dao3.config.json)[default true]",
+            );
             return;
           }
           if (
@@ -113,9 +154,9 @@ export async function build(
             } catch {
               // Otherwise make it external
               try {
-                new URL(source,importer);
+                new URL(source, importer);
                 // If it is a valid URL, return it
-                return new URL(source,importer).href;
+                return new URL(source, importer).href;
               } catch {
                 // Otherwise make it external
                 return;
@@ -161,7 +202,7 @@ export async function build(
     ],
   });
   // ts
-  const out = await rolled.generate({ format: "cjs" });
+  const out = await rolled.generate({ format: format });
   return out.output[0].code;
 }
 // build(

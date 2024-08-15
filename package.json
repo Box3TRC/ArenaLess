@@ -1,49 +1,120 @@
 {
   "name": "arenaless",
   "displayName": "arenaless",
-  "description": "Box3+TypeScript, just in the browser!",
+  "description": "BOX3<->VSCode.dev | WEB助力Box3+TypeScript开发！(兼容vscode.dev)(兼容ArenaPro)",
   "version": "0.0.1",
   "publisher": "tobylai",
+  "icon": "arenaless.png",
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
-    "Other"
+    "Programming Languages",
+    "Education"
+  ],"keywords": [
+    "box3",
+    "dao3",
+    "岛研所",
+    "菜鸡AIPlus",
+    "TypeScript",
+    "神奇代码岛",
+    "Arena",
+    "ArenaLess",
+    "ArenaPro",
+    "tobylai"
   ],
+
   "activationEvents": [
-    "onCommand",
-    "workspaceContains:dao3.config.json"
+    "onCommand:arenaless.activate-ext",
+    "workspaceContains:dao3.config.json",
+    "onView:caiplusaichat"
   ],
   "browser": "./dist/web/extension.js",
   "contributes": {
+    "menus": {
+      "editor/context": [
+        {
+          "title": "菜鸡AIPlus",
+          "submenu": "caiplus-menu",
+          "group": "2_cosy",
+          "when": "editorLangId == typescript || editorLangId == javascript && arenaless.activated && editorHasSelection"
+        }
+      ],
+      "caiplus-menu": [
+        {
+          "command": "arenaless.caiplus.ask_with_code"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "caiplus-container",
+          "title": "CaiPlus AI",
+          "icon": "resources/caiplus.svg"
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "id": "caiplus-menu",
+        "label": "菜鸡AIPlus"
+      }
+    ],
+    "views": {
+      "caiplus-container": [
+        {
+          "id": "caiplusaichat",
+          "name": "CaiPlus AI Chat",
+          "type": "webview"
+        }
+      ]
+    },
     "commands": [
       {
+        "command": "arenaless.activate-ext",
+        "title": "激活ArenaLess扩展 (WEB版可能不能自动激活)",
+        "category": "ArenaLess"
+      },
+      {
         "command": "arenaless.project.create",
-        "title": "ArenaLess: 创建ArenaLess项目"
+        "title": "创建ArenaLess项目",
+        "category": "ArenaLess"
       },
       {
         "command": "arenaless.project.buildtest",
-        "title": "ArenaLess: 测试构建项目并输出构建到控制台(仅调试使用)"
+        "title": "测试构建项目并输出构建到控制台(仅调试使用)",
+        "category": "ArenaLess"
       },
       {
         "command": "arenaless.panel",
-        "title": "ArenaLess: 打开ArenaLess面板"
+        "title": "打开ArenaLess面板",
+        "category": "ArenaLess"
       },
       {
         "command": "arenaless.dao3.login",
-        "title": "ArenaLess: Dao3登录"
+        "title": "Dao3登录",
+        "category": "ArenaLess"
       },
       {
         "command": "arenaless.dao3.logout",
-        "title": "ArenaLess: Dao3登出"
+        "title": "Dao3登出",
+        "category": "ArenaLess"
       },
       {
         "command": "arenaless.project.link",
-        "title": "ArenaLess: 链接扩展地图"
+        "title": "链接扩展地图",
+        "category": "ArenaLess"
       },
       {
         "command": "arenaless.project.buildNUpload",
-        "title": "ArenaLess: 构建并上传项目"
+        "title": "构建并上传项目",
+        "category": "ArenaLess"
+      },
+      {
+        "command": "arenaless.caiplus.ask_with_code",
+        "title": "携带代码向菜鸡提问",
+        "category": "菜鸡AIPlus"
       }
     ],
     "configuration": [
@@ -56,7 +127,7 @@
           },
           "arenaless.dao3.user.userToken": {
             "type": "string",
-            "description": "第二步：设置神岛账号Token，获取方式：https://code-api-pc.dao3.fun/auth/user"
+            "description": "第二步：设置神岛账号Token。在dao3.fun登录后，打开：https://code-api-pc.dao3.fun/auth/user 将\"token\":后面的内容不带引号粘贴"
           }
         }
       }
@@ -95,6 +166,7 @@
     "esbuild-wasm": "^0.23.0",
     "estree-walker": "^3.0.3",
     "json5": "^2.2.3",
+    "pako": "^2.1.0",
     "path-browserify": "^1.0.1",
     "rollup": "^4.20.0",
     "typescript": "^5.5.4"
