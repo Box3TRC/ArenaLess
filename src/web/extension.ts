@@ -65,7 +65,7 @@ async function checkLogin() {
     if (!data) return false;
     usercache = data;
   } catch (e) {
-    logger.error(e);
+    // logger.error(e);
     return false;
   }
   return true;
@@ -171,14 +171,18 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("arenaless.panel", async () => {
       // show quick pick
       let menu = {};
+      let loggined = await checkLogin();
       menu[
-        (await checkLogin())
+        (loggined)
           ? `(ID:${usercache.userId})${usercache.nickname}`
           : "登录神岛账号"
       ] = "arenaless.dao3.login";
       menu["创建ArenaLess项目"] = "arenaless.project.create";
       menu["链接扩展地图"] = "arenaless.project.link";
       menu["构建并上传"] = "arenaless.project.buildNUpload";
+      if(loggined){
+        menu["登出"]="arenaless.dao3.logout";
+      }
       let act = await vscode.window.showQuickPick(Object.keys(menu), {
         placeHolder: "请选择操作",
       });
@@ -353,6 +357,25 @@ export function activate(context: vscode.ExtensionContext) {
     });
   }));
   context.subscriptions.push(vscode.commands.registerCommand("arenaless.activate-ext",()=>{}));
+  // logout
+  context.subscriptions.push(
+    vscode.commands.registerCommand("arenaless.dao3.logout", async () => {
+      // erase settings
+      await vscode.workspace.getConfiguration().update(
+        "arenaless.dao3.user.userToken",
+        "",
+        vscode.ConfigurationTarget.Global,
+      );
+      await vscode.workspace.getConfiguration().update(
+        "arenaless.dao3.user.userAgent",
+        "",
+        vscode.ConfigurationTarget.Global,
+      );
+      user=null;
+      if(!await checkLogin()){vscode.window.showInformationMessage("已退出登录");}
+      else{vscode.window.showInformationMessage("退出登录失败");}
+    }),
+  );
 }
 
 // async function getFileContent(uri: vscode.Uri): Promise<string> {
@@ -373,14 +396,14 @@ export function activate(context: vscode.ExtensionContext) {
 export async function walk(folder: vscode.Uri): Promise<string[]> {
   const list: string[] = [];
   for (const [name, type] of await vscode.workspace.fs.readDirectory(folder)) {
-    const filePath = path.join(folder.path, name);
+    const filePath = path.join(folder.path, name).replace(/\\/g, "/");
     if (type === vscode.FileType.File) {
       list.push(filePath);
     } else if (type === vscode.FileType.Directory) {
       // if (name.startsWith('.')) {
       //   continue;
       // }
-      const subList = await walk(vscode.Uri.file(filePath));
+      const subList = await walk(vscode.Uri.joinPath(folder, name));
       list.push(...subList);
     }
   }
@@ -393,13 +416,16 @@ async function walkDirectory(
   let res = {};
   for (let name of list) {
     // logger.info(name);
-    name = path.relative(folder.path, name);
+    name = path.relative(folder.path, name).replace(/\\/g, "/");
+    // logger.info(name);
     res[name] = new TextDecoder().decode(
       await vscode.workspace.fs.readFile(
-        folder.with({ path: path.join(folder.path, name) }),
+        // folder.with({ path: path.join(folder.path, name) }),
+        vscode.Uri.joinPath(folder, name.replace(/\\/g, "/"))
       ),
     );
   }
+  // logger.info("file list:", list,Object.keys(res));
   return res;
 }
 
@@ -420,7 +446,7 @@ async function buildProject(workspaceUri: vscode.Uri) {
   // if (!serverEntry.startsWith("/")) serverEntry = "/" + serverEntry;
   logger.info("serverPath:" + serverPath + " serverEntry:" + serverEntry);
   let serverFiles_ = await walkDirectory(
-    workspaceUri.with({ path: path.join(workspaceUri.path, serverPath) }),
+    vscode.Uri.joinPath(workspaceUri, serverPath)
   );
   // add a "/" before them
   let serverFiles: Record<string, string> = {};
@@ -446,7 +472,7 @@ async function buildProject(workspaceUri: vscode.Uri) {
   // if (!clientEntry.startsWith("/")) clientEntry = "/" + clientEntry;
   logger.info("clientPath:" + clientPath + " clientEntry:" + clientEntry);
   let clientFiles_ = await walkDirectory(
-    workspaceUri.with({ path: path.join(workspaceUri.path, clientPath) }),
+    vscode.Uri.joinPath(workspaceUri, clientPath)
   );
   let clientFiles: Record<string, string> = {};
   for (let key in clientFiles_) {
