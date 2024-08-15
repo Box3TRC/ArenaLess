@@ -352,6 +352,7 @@ export function activate(context: vscode.ExtensionContext) {
       "action":"ask_with_code"
     });
   }));
+  context.subscriptions.push(vscode.commands.registerCommand("arenaless.activate-ext",()=>{}));
 }
 
 // async function getFileContent(uri: vscode.Uri): Promise<string> {
