@@ -60,14 +60,14 @@ const testBundlePlugin = {
 async function main() {
 	const ctx = await esbuild.context({
 		entryPoints: [
-			'src/web/extension.ts',
+			'src/web/extension.ts'
 			// 'src/web/test/suite/extensionTests.ts'
 		],
 		bundle: true,
 		format: 'cjs',
 		minify: production,
 		sourcemap: !production,
-		sourcesContent: false,
+		sourcesContent: true,
 		platform: 'browser',
 		outdir: 'dist/web',
 		external: ['vscode'],
@@ -76,13 +76,12 @@ async function main() {
 		define: {
 			global: 'globalThis',
 		},
-
 		plugins: [
 			polyfill.NodeGlobalsPolyfillPlugin({
 				process: true,
 				buffer: true,
 			}),
-			testBundlePlugin,
+			// testBundlePlugin,
 			esbuildProblemMatcherPlugin, /* add to the end of plugins array */
 		]
 	});

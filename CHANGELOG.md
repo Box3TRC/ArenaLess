@@ -1,5 +1,8 @@
 # Change Log
 
+# 0.0.3
+- ??? vscode把src放在.vscode-ignore里了，现在进行了修改，解决了资源文件的bug...
+
 ## 0.0.2
 - 略微精简包体积
 
