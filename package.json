@@ -2,7 +2,7 @@
   "name": "arenaless",
   "displayName": "arenaless",
   "description": "BOX3<->VSCode.dev | WEB powers Box3+TypeScript development!(support vscode.dev)(compatible with ArenaPro)",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "tobylai",
   "icon": "arenaless.png",
   "engines": {
