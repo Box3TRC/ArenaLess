@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.0.8+0.0.9
+- 修复了与ArenaPro共存时扫描node_modules和dist等文件夹引发的构建极其缓慢
+- 更换Esbuild-wasm为Terser来实现压缩js代码
+- 目前能把构建+上传时间控制在3s左右
+
 ## 0.0.7
 - 更新了模板
 

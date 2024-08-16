@@ -2,7 +2,7 @@
   "name": "arenaless",
   "displayName": "arenaless",
   "description": "BOX3<->VSCode.dev | WEB powers Box3+TypeScript development!(support vscode.dev)(compatible with ArenaPro)",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "publisher": "tobylai",
   "icon": "arenaless.png",
   "engines": {
@@ -11,7 +11,8 @@
   "categories": [
     "Programming Languages",
     "Education"
-  ],"keywords": [
+  ],
+  "keywords": [
     "box3",
     "dao3",
     "岛研所",
@@ -23,7 +24,6 @@
     "ArenaPro",
     "tobylai"
   ],
-
   "activationEvents": [
     "onCommand:arenaless.activate-ext",
     "workspaceContains:dao3.config.json",
@@ -163,12 +163,11 @@
   },
   "dependencies": {
     "@types/node": "^22.2.0",
-    "esbuild-wasm": "^0.23.0",
-    "estree-walker": "^3.0.3",
     "json5": "^2.2.3",
     "pako": "^2.1.0",
     "path-browserify": "^1.0.1",
     "rollup": "^4.20.0",
+    "terser": "^5.31.6",
     "typescript": "^5.5.4"
   },
   "repository": {

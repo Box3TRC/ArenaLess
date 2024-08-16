@@ -6,7 +6,7 @@ import { build } from "./builder/builder";
 import * as path from "path-browserify";
 import { Dao3Account } from "./account";
 import { ChatWebViewProvider } from "./caiplus/webview";
-import {ungzip} from "pako";
+import { ungzip } from "pako";
 // import * as relative from "relative";
 
 let logger: vscode.LogOutputChannel | undefined;
@@ -107,9 +107,13 @@ export function activate(context: vscode.ExtensionContext) {
   statusBarIcon.show();
 
   // sidebar panel
-  const webviewProvider=new ChatWebViewProvider(context,logger);
-  let opt={webviewOptions:{retainContextWhenHidden: true}};
-  vscode.window.registerWebviewViewProvider("caiplusaichat",webviewProvider,opt);
+  const webviewProvider = new ChatWebViewProvider(context, logger);
+  let opt = { webviewOptions: { retainContextWhenHidden: true } };
+  vscode.window.registerWebviewViewProvider(
+    "caiplusaichat",
+    webviewProvider,
+    opt,
+  );
   let testLogin = async (message = false) => {
     if (await login()) {
       logger.info("登录成功");
@@ -173,15 +177,15 @@ export function activate(context: vscode.ExtensionContext) {
       let menu = {};
       let loggined = await checkLogin();
       menu[
-        (loggined)
+        loggined
           ? `(ID:${usercache.userId})${usercache.nickname}`
           : "登录神岛账号"
       ] = "arenaless.dao3.login";
       menu["创建ArenaLess项目"] = "arenaless.project.create";
       menu["链接扩展地图"] = "arenaless.project.link";
       menu["构建并上传"] = "arenaless.project.buildNUpload";
-      if(loggined){
-        menu["登出"]="arenaless.dao3.logout";
+      if (loggined) {
+        menu["登出"] = "arenaless.dao3.logout";
       }
       let act = await vscode.window.showQuickPick(Object.keys(menu), {
         placeHolder: "请选择操作",
@@ -283,11 +287,17 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
         // dao3.config.json
-        let configpath = folder.uri.with({
-          path: folder.uri.path + "/dao3.config.json",
-        });
-        if (!await vscode.workspace.fs.stat(configpath)) {
-          // error
+        // let configpath = folder.uri.with({
+        //   path: folder.uri.path + "/dao3.config.json",
+        // });
+        let configpath = vscode.Uri.joinPath(folder.uri, "dao3.config.json");
+        try {
+          if (!await vscode.workspace.fs.stat(configpath)) {
+            // error
+            vscode.window.showErrorMessage("dao3.config.json不存在");
+            return;
+          }
+        } catch (e) {
           vscode.window.showErrorMessage("dao3.config.json不存在");
           return;
         }
@@ -345,18 +355,25 @@ export function activate(context: vscode.ExtensionContext) {
       },
     ),
   );
-  context.subscriptions.push(vscode.commands.registerCommand("arenaless.caiplus.ask_with_code",async()=>{
-    webviewProvider.show();
-    // get text editor selection
-    let editor=vscode.window.activeTextEditor;
-    let doc=editor.document;
-    let text=doc.getText(editor.selection);
-    webviewProvider.sendMessage({
-      "code": text,
-      "action":"ask_with_code"
-    });
-  }));
-  context.subscriptions.push(vscode.commands.registerCommand("arenaless.activate-ext",()=>{}));
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "arenaless.caiplus.ask_with_code",
+      async () => {
+        webviewProvider.show();
+        // get text editor selection
+        let editor = vscode.window.activeTextEditor;
+        let doc = editor.document;
+        let text = doc.getText(editor.selection);
+        webviewProvider.sendMessage({
+          "code": text,
+          "action": "ask_with_code",
+        });
+      },
+    ),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("arenaless.activate-ext", () => {}),
+  );
   // logout
   context.subscriptions.push(
     vscode.commands.registerCommand("arenaless.dao3.logout", async () => {
@@ -371,9 +388,10 @@ export function activate(context: vscode.ExtensionContext) {
         "",
         vscode.ConfigurationTarget.Global,
       );
-      user=null;
-      if(!await checkLogin()){vscode.window.showInformationMessage("已退出登录");}
-      else{vscode.window.showInformationMessage("退出登录失败");}
+      user = null;
+      if (!await checkLogin()) {
+        vscode.window.showInformationMessage("已退出登录");
+      } else vscode.window.showInformationMessage("退出登录失败");
     }),
   );
 }
@@ -409,6 +427,22 @@ export async function walk(folder: vscode.Uri): Promise<string[]> {
   }
   return list;
 }
+// name.startsWith(".git/")||name.startsWith("server/dist/") ||name.startsWith("client/dist/") || name.startsWith("server/.log/") || name.startsWith("client/.log/") || name.startsWith("node_modules/")
+const BLOCKED_STARTSWITHS = [
+  ".git/",
+  "server/dist/",
+  "client/dist/",
+  "server/.log/",
+  "client/.log/",
+  "node_modules/",
+  "dist/",
+  ".log/",
+];
+function isblockedfile(name: string) {
+  return BLOCKED_STARTSWITHS.some((startswith) => {
+    return name.startsWith(startswith);
+  });
+}
 async function walkDirectory(
   folder: vscode.Uri,
 ): Promise<Record<string, string>> {
@@ -416,12 +450,17 @@ async function walkDirectory(
   let res = {};
   for (let name of list) {
     // logger.info(name);
-    name = path.relative(folder.path, name).replace(/\\/g, "/");
+    name = path.relative(folder.path, name).replace(/\\/g, "/").replace(
+      "./",
+      "",
+    );
+    // logger.info(name);
+    if (isblockedfile(name)) continue;
     // logger.info(name);
     res[name] = new TextDecoder().decode(
       await vscode.workspace.fs.readFile(
         // folder.with({ path: path.join(folder.path, name) }),
-        vscode.Uri.joinPath(folder, name.replace(/\\/g, "/"))
+        vscode.Uri.joinPath(folder, name.replace(/\\/g, "/")),
       ),
     );
   }
@@ -439,55 +478,56 @@ async function buildProject(workspaceUri: vscode.Uri) {
   let res = await walkDirectory(workspaceUri);
   // logger.info(JSON.stringify(res))
   let dao3Conf = JSON.parse(res["dao3.config.json"]);
-  let importMap=res["importMap.arenaless.jsonc"];
-  // server build
-  let serverPath = dao3Conf.ArenaPro.file.typescript.server.base;
-  let serverEntry = dao3Conf.ArenaPro.file.typescript.server.entry;
-  // if (!serverEntry.startsWith("/")) serverEntry = "/" + serverEntry;
-  logger.info("serverPath:" + serverPath + " serverEntry:" + serverEntry);
-  let serverFiles_ = await walkDirectory(
-    vscode.Uri.joinPath(workspaceUri, serverPath)
-  );
-  // add a "/" before them
-  let serverFiles: Record<string, string> = {};
-  for (let key in serverFiles_) {
-    serverFiles[key] = serverFiles_[key];
-  }
-  // logger.info(JSON.stringify(serverFiles))
-  // vscode.workspace.fs.writeFile(workspaceUri.with({ path: workspaceUri.path + "/serverFiles" }),new TextEncoder().encode(JSON.stringify(serverFiles)))
-  // logger.info(Object.keys(serverFiles).toString())
-  let serverBundle = await build(
-    serverFiles,
-    serverEntry,
-    serverFiles["tsconfig.json"],
-    logger,
-    dao3Conf,
-    "cjs",
-    importMap
-  );
-  // logger.info(`serverBundle:${serverBundle}`);
-  // client(the same!)
-  let clientPath = dao3Conf.ArenaPro.file.typescript.client.base;
-  let clientEntry = dao3Conf.ArenaPro.file.typescript.client.entry;
-  // if (!clientEntry.startsWith("/")) clientEntry = "/" + clientEntry;
-  logger.info("clientPath:" + clientPath + " clientEntry:" + clientEntry);
-  let clientFiles_ = await walkDirectory(
-    vscode.Uri.joinPath(workspaceUri, clientPath)
-  );
-  let clientFiles: Record<string, string> = {};
-  for (let key in clientFiles_) {
-    clientFiles[key] = clientFiles_[key];
-  }
-  let clientBundle = await build(
-    clientFiles,
-    clientEntry,
-    clientFiles["tsconfig.json"],
-    logger,
-    dao3Conf,
-    "es",
-    importMap
-  );
-  // logger.info(`clientBundle:${clientBundle}`);
+  let importMap = res["importMap.arenaless.jsonc"];
+  let serverBuilder = async () => {
+    // server build
+    let serverPath = dao3Conf.ArenaPro.file.typescript.server.base;
+    let serverEntry = dao3Conf.ArenaPro.file.typescript.server.entry;
+    // if (!serverEntry.startsWith("/")) serverEntry = "/" + serverEntry;
+    logger.info("serverPath:" + serverPath + " serverEntry:" + serverEntry);
+    let serverFiles_ = await walkDirectory(
+      vscode.Uri.joinPath(workspaceUri, serverPath),
+    );
+    // add a "/" before them
+    let serverFiles: Record<string, string> = {};
+    for (let key in serverFiles_) {
+      serverFiles[key] = serverFiles_[key];
+    }
+    return await build(
+      serverFiles,
+      serverEntry,
+      serverFiles["tsconfig.json"],
+      logger,
+      dao3Conf,
+      "cjs",
+      importMap,
+    );
+  };
+  let clientBuilder = async () => {
+    let clientPath = dao3Conf.ArenaPro.file.typescript.client.base;
+    let clientEntry = dao3Conf.ArenaPro.file.typescript.client.entry;
+    logger.info("clientPath:" + clientPath + " clientEntry:" + clientEntry);
+    let clientFiles_ = await walkDirectory(
+      vscode.Uri.joinPath(workspaceUri, clientPath),
+    );
+    let clientFiles: Record<string, string> = {};
+    for (let key in clientFiles_) {
+      clientFiles[key] = clientFiles_[key];
+    }
+    return await build(
+      clientFiles,
+      clientEntry,
+      clientFiles["tsconfig.json"],
+      logger,
+      dao3Conf,
+      "es",
+      importMap,
+    );
+  };
+  let [serverBundle, clientBundle] = await Promise.all([
+    serverBuilder(),
+    clientBuilder(),
+  ]);
   return {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     server_bundle: serverBundle,

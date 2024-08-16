@@ -1,28 +1,29 @@
 import { rollup } from "./rollup-browser";
-import esbuild from "esbuild-wasm";
 import virtual from "./plugin-virtual";
 import alias from "./plugin-alias";
 import * as JSON5 from "json5";
 import ts from "typescript";
 import path from "path-browserify";
-// import tsconfigload from "tsconfig"
-// import ts from "rollup-plugin-ts/dist/esm/index"
+// import { minify } from "terser";
+let minifyTerser;
+(async()=>{
+  minifyTerser=(await import("terser")).minify;
+})();
 
 // now i need to write a bundler that works in the browser
 
-// const a=
 
-(async () => {
-  try {
-    esbuild.initialize({});
-  } catch (e) {
-    esbuild.initialize({
-      wasmModule: await WebAssembly.compileStreaming(
-        fetch("https://esm.sh/esbuild-wasm/esbuild.wasm"),
-      ),
-    });
-  }
-})();
+// (async () => {
+//   try {
+//     esbuild.initialize({});
+//   } catch (e) {
+//     esbuild.initialize({
+//       wasmModule: await WebAssembly.compileStreaming(
+//         fetch("https://esm.sh/esbuild-wasm/esbuild.wasm"),
+//       ),
+//     });
+//   }
+// })();
 
 async function toTypeScriptAPIReadable(tsconfig: any) {
   let res: ts.CompilerOptions = {};
@@ -192,13 +193,20 @@ export async function build(
           return "\x00virtual:" + source;
         },
       },
+      // {
+      //   name: "esbuild-minify",
+      //   async renderChunk(code, chunk) {
+      //     return (await esbuild.transform(code, { minify: true, loader: "js" }))
+      //       .code;
+      //   },
+      // },
       {
-        name: "esbuild-minify",
-        async renderChunk(code, chunk) {
-          return (await esbuild.transform(code, { minify: true, loader: "js" }))
-            .code;
-        },
-      },
+        name:"terser-minify",
+        async renderChunk(code,chunk){
+          return (await minifyTerser(code, {})).code;
+        }
+      }
+      // terser({})
     ],
   });
   // ts
