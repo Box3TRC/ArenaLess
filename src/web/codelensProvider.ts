@@ -53,7 +53,7 @@ export class Dao3ConfigCodeLensProvider implements vscode.CodeLensProvider {
             "ArenaPro.map": [{
                 title: "[AL]链接扩展地图",
                 command: "arenaless.project.link",
-            },{
+            }, {
                 title: "[AL]跳转创作端",
                 command: "arenaless.project.openMap",
             }],
@@ -61,7 +61,7 @@ export class Dao3ConfigCodeLensProvider implements vscode.CodeLensProvider {
                 title: "[AL]编译输出文件名",
                 command: "arenaless.project.dao3cfg.selectOutputAndUpdate",
                 preprocess(data: any, json: any) {
-                    data.title = `[AL]编译输出文件名: ${json.ArenaPro.outputAndUpdate[0]||"bundle.js"}`;
+                    data.title = `[AL]编译输出文件名: ${json.ArenaPro.outputAndUpdate[0] || "bundle.js"}`;
                     return data;
                 },
             }],
@@ -86,7 +86,13 @@ export class Dao3ConfigCodeLensProvider implements vscode.CodeLensProvider {
             let astres = parsejast(text, { loc: true });
             // find entries loc by path
             for (let entry in this.entries) {
-                let loc = getLoc(astres, entry.split("."));
+                let loc:any;
+                try {
+                    loc = getLoc(astres, entry.split("."));
+                } catch (e) {
+                    this.logger.warn(e);
+                    continue;
+                }
                 if (loc) {
                     let range = new vscode.Range(
                         new vscode.Position(loc.start.line - 1, loc.start.column),
@@ -100,7 +106,7 @@ export class Dao3ConfigCodeLensProvider implements vscode.CodeLensProvider {
                             command: cmd.command,
                         };
                         if (cmd.preprocess) {
-                            command=cmd.preprocess(command,JSON.parse(text));
+                            command = cmd.preprocess(command, JSON.parse(text));
                         }
                         codeLens.command = command;
                         codeLenses.push(codeLens);
