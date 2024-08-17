@@ -77,7 +77,8 @@ export class Dao3Account {
       return false;
     }
   }
-  async uploadBuild(mapId:string,server_bundle:string,client_bundle:string){
+  async uploadBuild(mapId:string,server_bundle:string,client_bundle:string,outputName:string){
+    this.logger.info(`uploading with output name ${outputName}`);
     // /api/maps/uploadBuild
     let resp = await fetch(
       "https://dao3gateway.arenaless-server.trc.tobylai.fun/api/maps/uploadBuild",
@@ -87,7 +88,8 @@ export class Dao3Account {
           ...this.auth(),
           mapId:mapId,
           server_bundle:server_bundle,
-          client_bundle:client_bundle
+          client_bundle:client_bundle,
+          outputName
         }),
       }
     );

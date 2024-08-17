@@ -47,6 +47,7 @@ export async function build(
   dao3config?: any,
   format: "es" | "cjs" = "cjs",
   importMap?: string | undefined,
+  developmentMode: boolean = false,
 ) {
   // read paths
   let aliases = [], tsconfig;
@@ -203,6 +204,7 @@ export async function build(
       {
         name:"terser-minify",
         async renderChunk(code,chunk){
+          if(developmentMode){return;}
           return (await minifyTerser(code, {})).code;
         }
       }

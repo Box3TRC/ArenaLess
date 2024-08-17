@@ -7,6 +7,7 @@ import * as path from "path-browserify";
 import { Dao3Account } from "./account";
 import { ChatWebViewProvider } from "./caiplus/webview";
 import { ungzip } from "pako";
+import { Dao3ConfigCodeLensProvider } from "./codelensProvider";
 // import * as relative from "relative";
 
 let logger: vscode.LogOutputChannel | undefined;
@@ -25,6 +26,23 @@ async function chooseWorkspace(): Promise<vscode.WorkspaceFolder | undefined> {
   }
   logger?.info(`choose workspace:${folder.uri.path}`);
   return folder;
+}
+
+async function readDao3Config() {
+  let folder = await chooseWorkspace();
+  if (!folder) return;
+  let configpath = vscode.Uri.joinPath(folder.uri, "dao3.config.json");
+  try {
+    if (!await vscode.workspace.fs.stat(configpath)) {
+      // error
+      vscode.window.showErrorMessage("dao3.config.json不存在");
+      return {folder,configpath:null};
+    }
+    return {folder,configpath};
+  } catch (e) {
+    vscode.window.showErrorMessage("dao3.config.json不存在");
+    return {folder,configpath:null};
+  }
 }
 
 const TEMPLATE_CONFIG: Record<string, string[]> = {
@@ -58,16 +76,27 @@ async function copyTemplate(
 
 let user: Dao3Account | null = null;
 let usercache: any;
-async function checkLogin() {
+async function checkLogin(immediate:boolean=false) {
   if (!user) return false;
-  try {
-    let data = await user.getUserData();
-    if (!data) return false;
-    usercache = data;
-  } catch (e) {
-    // logger.error(e);
-    return false;
+  if(immediate){
+    try{
+      let data=await user.getUserData();
+      usercache=data;
+      if(!data)return false;
+    }catch(e){
+      usercache=null;
+      logger.error("登录失败",e.message);
+    }
   }
+  setTimeout(async()=>{
+    try{
+      usercache= await user.getUserData();
+    }catch(e){
+      usercache=null;
+      logger.error("登录失败",e.message);
+    }
+  },100);
+  if(!usercache)return false;
   return true;
 }
 async function login() {
@@ -84,7 +113,7 @@ async function login() {
     logger,
   );
   // logger.info("user:", user.token,"ua",user.userAgent)
-  if (await checkLogin()) {
+  if (await checkLogin(true)) {
     return true;
   }
   return false;
@@ -131,9 +160,22 @@ export function activate(context: vscode.ExtensionContext) {
       statusBarIcon.backgroundColor = new vscode.ThemeColor(
         "statusBar.background",
       );
+      if(message){
+        let token = vscode.workspace.getConfiguration("arenaless.dao3.user").get(
+          "userToken",
+        );
+        let userAgent = vscode.workspace.getConfiguration("arenaless.dao3.user").get(
+          "userAgent",
+        );
+        if (!token && !userAgent) {
+          return;
+          // vscode.window.showErrorMessage("请设置Dao3用户信息");
+        }
+        vscode.window.showErrorMessage("登录失败 请查看输出>ArenaLess");
+      }
     }
   };
-  testLogin();
+  testLogin(true);
   vscode.workspace.onDidChangeConfiguration(async (ev) => {
     if (ev.affectsConfiguration("arenaless.dao3.user")) {
       testLogin(true);
@@ -287,9 +329,6 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
         // dao3.config.json
-        // let configpath = folder.uri.with({
-        //   path: folder.uri.path + "/dao3.config.json",
-        // });
         let configpath = vscode.Uri.joinPath(folder.uri, "dao3.config.json");
         try {
           if (!await vscode.workspace.fs.stat(configpath)) {
@@ -341,6 +380,7 @@ export function activate(context: vscode.ExtensionContext) {
             id.toString(),
             buildRes.server_bundle,
             buildRes.client_bundle,
+            buildRes.outputName
           );
           if (success) {
             vscode.window.showInformationMessage(
@@ -372,7 +412,7 @@ export function activate(context: vscode.ExtensionContext) {
     ),
   );
   context.subscriptions.push(
-    vscode.commands.registerCommand("arenaless.activate-ext", () => {}),
+    vscode.commands.registerCommand("arenaless.activate-ext", () => { }),
   );
   // logout
   context.subscriptions.push(
@@ -394,22 +434,61 @@ export function activate(context: vscode.ExtensionContext) {
       } else vscode.window.showInformationMessage("退出登录失败");
     }),
   );
+  // Code Lens for dao3.config.json
+  context.subscriptions.push(vscode.languages.registerCodeLensProvider({ language: "json", pattern: "**/dao3.config.json" }, new Dao3ConfigCodeLensProvider(logger)));
+  context.subscriptions.push(vscode.commands.registerCommand("arenaless.project.dao3cfg.selectOutputAndUpdate", async () => {
+    let { folder, configpath } = await readDao3Config();
+    if(!configpath)return;
+    // read
+    try {
+      let dao3config = JSON.parse(
+        new TextDecoder().decode(
+          await vscode.workspace.fs.readFile(configpath),
+        ),
+      );
+      if (!dao3config.ArenaPro.outputAndUpdate || dao3config.ArenaPro.outputAndUpdate.length === 0) {
+        dao3config.ArenaPro.outputAndUpdate = ["bundle.js"];
+      }
+      let selList=dao3config.ArenaPro.outputAndUpdate;
+      if(!selList.includes("bundle.js")){
+        selList.push("bundle.js");
+      }
+      let selected = await vscode.window.showQuickPick(selList, {
+        canPickMany: false,
+        title: "选择编译输出文件名",
+      });
+      if (!selected) return;
+      // remove selected
+      dao3config.ArenaPro.outputAndUpdate = dao3config.ArenaPro.outputAndUpdate.filter((item: string) => item !== selected);
+      // add selected to the first
+      dao3config.ArenaPro.outputAndUpdate.unshift(selected);
+      // write config
+      await vscode.workspace.fs.writeFile(configpath, new TextEncoder().encode(JSON.stringify(dao3config, null, 4)));
+    } catch (e) {
+      vscode.window.showErrorMessage("dao3.config.json outputAndUpdate 读取失败");
+      logger?.error(e);
+      return;
+    }
+  }));
+  context.subscriptions.push(vscode.commands.registerCommand("arenaless.project.openMap", async () => {
+    let { folder, configpath } = await readDao3Config();
+    if(!configpath)return;
+    // read
+    try {
+      let dao3config = JSON.parse(
+        new TextDecoder().decode(
+          await vscode.workspace.fs.readFile(configpath),
+        ),
+      );
+      let editHash=dao3config["ArenaPro"]["map"]["editHash"];
+      vscode.env.openExternal(vscode.Uri.parse(`https://dao3.fun/edit/${editHash}`));
+    } catch (e) {
+      vscode.window.showErrorMessage("dao3.config.json 读取失败");
+      logger?.error(e);
+      return;
+    }
+  }));
 }
-
-// async function getFileContent(uri: vscode.Uri): Promise<string> {
-//   return new Promise((resolve, reject) => {
-//     vscode.workspace.fs.readFile(uri).then(
-//       (content) => {
-//         const textDecoder = new TextDecoder();
-//         const fileContent = textDecoder.decode(content);
-//         resolve(fileContent);
-//       },
-//       (error) => {
-//         reject(error);
-//       },
-//     );
-//   });
-// }
 
 export async function walk(folder: vscode.Uri): Promise<string[]> {
   const list: string[] = [];
@@ -427,7 +506,6 @@ export async function walk(folder: vscode.Uri): Promise<string[]> {
   }
   return list;
 }
-// name.startsWith(".git/")||name.startsWith("server/dist/") ||name.startsWith("client/dist/") || name.startsWith("server/.log/") || name.startsWith("client/.log/") || name.startsWith("node_modules/")
 const BLOCKED_STARTSWITHS = [
   ".git/",
   "server/dist/",
@@ -468,22 +546,16 @@ async function walkDirectory(
   return res;
 }
 
-// function pathJoin(...paths: string[]): string {
-//   return paths.filter(Boolean).join("/");
-// }
-// function relative(from, to) {
-//   return path.relative(from, to);
-// }
 async function buildProject(workspaceUri: vscode.Uri) {
   let res = await walkDirectory(workspaceUri);
   // logger.info(JSON.stringify(res))
   let dao3Conf = JSON.parse(res["dao3.config.json"]);
   let importMap = res["importMap.arenaless.jsonc"];
+  let outputName = dao3Conf.ArenaPro.outputAndUpdate[0] || "bundle.js";
   let serverBuilder = async () => {
     // server build
     let serverPath = dao3Conf.ArenaPro.file.typescript.server.base;
     let serverEntry = dao3Conf.ArenaPro.file.typescript.server.entry;
-    // if (!serverEntry.startsWith("/")) serverEntry = "/" + serverEntry;
     logger.info("serverPath:" + serverPath + " serverEntry:" + serverEntry);
     let serverFiles_ = await walkDirectory(
       vscode.Uri.joinPath(workspaceUri, serverPath),
@@ -501,6 +573,7 @@ async function buildProject(workspaceUri: vscode.Uri) {
       dao3Conf,
       "cjs",
       importMap,
+      dao3Conf.ArenaPro.file.typescript.server.development
     );
   };
   let clientBuilder = async () => {
@@ -522,6 +595,7 @@ async function buildProject(workspaceUri: vscode.Uri) {
       dao3Conf,
       "es",
       importMap,
+      dao3Conf.ArenaPro.file.typescript.client.development
     );
   };
   let [serverBundle, clientBundle] = await Promise.all([
@@ -533,8 +607,9 @@ async function buildProject(workspaceUri: vscode.Uri) {
     server_bundle: serverBundle,
     // eslint-disable-next-line @typescript-eslint/naming-convention
     client_bundle: clientBundle,
+    outputName
   };
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }

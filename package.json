@@ -1,8 +1,8 @@
 {
   "name": "arenaless",
-  "displayName": "arenaless",
+  "displayName": "ArenaLess",
   "description": "BOX3<->VSCode.dev | WEB powers Box3+TypeScript development!(support vscode.dev)(compatible with ArenaPro)",
-  "version": "0.0.9",
+  "version": "0.0.11",
   "publisher": "tobylai",
   "icon": "arenaless.png",
   "engines": {
@@ -31,6 +31,14 @@
   ],
   "browser": "./dist/web/extension.js",
   "contributes": {
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "/dao3.config.json"
+        ],
+        "url": "https://gist.githubusercontent.com/helloyork/f859765899f5072bcdf8cf3526ed22ed/raw/0cc971bcc3f0f331204144712dddf6dfa7f97e12/package-schema.json"
+      }
+    ],
     "menus": {
       "editor/context": [
         {
@@ -115,6 +123,14 @@
         "command": "arenaless.caiplus.ask_with_code",
         "title": "携带代码向菜鸡提问",
         "category": "菜鸡AIPlus"
+      },{
+        "command":"arenaless.project.dao3cfg.selectOutputAndUpdate",
+        "title":"选择输出目录并更新配置",
+        "category":"ArenaLess"
+      },{
+        "command": "arenaless.project.openMap",
+        "title": "跳转创作端",
+        "category": "ArenaLess"
       }
     ],
     "configuration": [
@@ -163,6 +179,7 @@
   },
   "dependencies": {
     "@types/node": "^22.2.0",
+    "json-to-ast": "^2.1.0",
     "json5": "^2.2.3",
     "pako": "^2.1.0",
     "path-browserify": "^1.0.1",
