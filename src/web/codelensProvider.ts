@@ -90,7 +90,7 @@ export class Dao3ConfigCodeLensProvider implements vscode.CodeLensProvider {
                 try {
                     loc = getLoc(astres, entry.split("."));
                 } catch (e) {
-                    this.logger.warn(e);
+                    //this.logger.warn(e);
                     continue;
                 }
                 if (loc) {
@@ -115,7 +115,7 @@ export class Dao3ConfigCodeLensProvider implements vscode.CodeLensProvider {
             }
             return codeLenses;
         } catch (e) {
-            this.logger.error(e);
+            this.logger.warn("警告:dao3.config.json格式错误",e.toString());
         }
         return [];
     }

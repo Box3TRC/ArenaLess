@@ -551,7 +551,7 @@ async function buildProject(workspaceUri: vscode.Uri) {
   // logger.info(JSON.stringify(res))
   let dao3Conf = JSON.parse(res["dao3.config.json"]);
   let importMap = res["importMap.arenaless.jsonc"];
-  let outputName = dao3Conf.ArenaPro.outputAndUpdate[0] || "bundle.js";
+  let outputName = (dao3Conf.ArenaPro.outputAndUpdate||[])[0] || "bundle.js";
   let serverBuilder = async () => {
     // server build
     let serverPath = dao3Conf.ArenaPro.file.typescript.server.base;
