@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.0.13
+- 修复了一些CodeLens的输出
+- 修复了没有`outputAndUpdate`字段引发的构建失败
+
 ## 0.0.12
 - 修复了一些codelens的问题
 

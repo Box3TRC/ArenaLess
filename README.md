@@ -1,10 +1,15 @@
 # ArenaLess
+> 非官方出品
+
 支持VSCode与TypeScript的神岛游戏制作插件
 告别繁琐，拥抱高效！神岛ArenaLess插件，专为游戏开发者设计，旨在通过无缝集成VSCode本地版、[VSCode在线版](https://vscode.dev)与神岛Arena编辑器，为游戏开发带来前所未有的便捷与效率。本插件不仅解决了Arena编辑器功能单一、开发体验不佳的问题，还引入了TypeScript支持，为游戏开发提供更丰富的功能和体验。
 
 👆 以上文字修改自ArenaPro的介绍
 
 本插件旨在实现神岛实验室的ArenaPro的核心功能，并且可以在[VSCode在线版 vscode.dev](https://vscode.dev)和本地版上运行。使用vscode.dev链接到Github仓库后，您就可畅享在任何设备的`TypeScript`+`Arena`编程体验。
+
+## 文档
+[岛研所ArenaLess文档](https://trc.box3lab.com/docs/arenaless/)
 
 ## 快速上手
 基础操作几乎与ArenaPro一致。
@@ -83,3 +88,22 @@ import JSON5 from "json5";// 由于你上面制定了了json5的别名，所以�
 ## 前缀列表
 1. `npm:xxx` -> `https://esm.sh/xxx`
 2. `jsr:xxx` -> `https://esm.sh/jsr/xxx`
+
+## 其他说明
+1. ArenaLess并非官方出品
+2. ArenaLess的API请求会经过ArenaLess-Server服务器进行中转(原API在web存在cors跨域问题，只好使用中转)。
+    ArenaLess-Server是一个神岛API的简单封装，由岛研所托管。我们不会收集用户数据，仅包含API封装。
+### 鸣谢
+- 感谢@冷鱼闲风大佬的指点。
+- 感谢原ArenaPro项目。
+- 感谢神岛实验室。
+- 感谢神奇代码岛。
+- 感谢岛研所。
+
+### 以下项目对本项目的实现有很大帮助
+- @rollup/browser及其virtual,alias插件。这是本插件打包器的实现。
+- esbuild-wasm 用于压缩js代码(已改用terser)
+- terser 用于压缩js代码
+- pako 用来解压缩gzip (模板是gzip压缩过的)
+- esm.sh AL使用它来获取npm,jsr,gh模块。
+- hono API中转服务器
