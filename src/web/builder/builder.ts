@@ -50,10 +50,10 @@ export async function build(
   developmentMode: boolean = false,
 ) {
   // read paths
-  let aliases = [], tsconfig;
+  let aliases = [], tsconfig:any={};
   if (tsconfigRaw) {
     try {
-      tsconfig = JSON5.parse(tsconfigRaw).compilerOptions;
+      tsconfig = JSON5.parse(tsconfigRaw).compilerOptions||tsconfig;
     } catch (e) {
       throw new Error(`tsconfig读取出错！${e}`);
     }
@@ -105,6 +105,10 @@ export async function build(
   });
   for (let key in fileList) {
     if (key.startsWith("dist/") || key.startsWith(".log/")) {continue;}
+    if(!key.endsWith(".ts")){
+      newfileList[key] = fileList[key];
+      continue;
+    }
     newfileList[key] = ts.transpile(fileList[key], compilerOptions);
   }
   // logger.info(`fileList:${JSON.stringify(newfileList)}`);
@@ -182,7 +186,7 @@ export async function build(
             );
           }
           // file prob
-          if (!source.endsWith(".ts") && !source.endsWith(".js")) {
+          if (source.split(".").length===1) {
             if (newfileList[`${source}.ts`]) {
               source = `${source}.ts`;
               console.log("added ts");
@@ -192,6 +196,16 @@ export async function build(
           }
           // logger.info(`resolveId solved:${source}`);
           return "\x00virtual:" + source;
+        },
+      },
+      {
+        name: "json-loader",
+        transform(code, id) {
+            if(id.endsWith(".json")){
+              return {code: `export default ${JSON.stringify(JSON.parse(code))}`};
+            }else{
+              return null;
+            }
         },
       },
       // {
