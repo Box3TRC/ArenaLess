@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.0.15
+- 修复了构建器的一些bug
+- 跟进ArenaPro导入json文件的功能`import foo from "./bar.json"`
+
 ## 0.0.13
 - 修复了一些CodeLens的输出
 - 修复了没有`outputAndUpdate`字段引发的构建失败

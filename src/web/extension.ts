@@ -2,12 +2,14 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-import { build } from "./builder/builder";
+// import { build } from "./old_builder/builder";
+import { build } from "arenaless-bundler";
 import * as path from "path-browserify";
 import { Dao3Account } from "./account";
 import { ChatWebViewProvider } from "./caiplus/webview";
 import { ungzip } from "pako";
 import { Dao3ConfigCodeLensProvider } from "./codelensProvider";
+import { Box3ExtMapTreeProvider } from "./box3ExtMapTreeProvider";
 // import * as relative from "relative";
 
 let logger: vscode.LogOutputChannel | undefined;
@@ -135,7 +137,7 @@ export function activate(context: vscode.ExtensionContext) {
   statusBarIcon.backgroundColor = new vscode.ThemeColor("statusBar.background");
   statusBarIcon.show();
 
-  // sidebar panel
+  // sidebar panel caiplus
   const webviewProvider = new ChatWebViewProvider(context, logger);
   let opt = { webviewOptions: { retainContextWhenHidden: true } };
   vscode.window.registerWebviewViewProvider(
@@ -143,6 +145,18 @@ export function activate(context: vscode.ExtensionContext) {
     webviewProvider,
     opt,
   );
+  // sidebar scm extMap
+  let box3extmaptree=new Box3ExtMapTreeProvider(()=>user);
+  vscode.window.registerTreeDataProvider(
+    "submaptree",
+    box3extmaptree
+  );
+  context.subscriptions.push(vscode.commands.registerCommand("submaptree.refreshEntry",async()=>{
+    box3extmaptree.refresh();
+  }));
+  context.subscriptions.push(vscode.commands.registerCommand("submaptree.openMapInBrowser",(editHash:string)=>{
+    vscode.env.openExternal(vscode.Uri.parse(`https://dao3.fun/edit/${editHash}`));
+  }));
   let testLogin = async (message = false) => {
     if (await login()) {
       logger.info("登录成功");
@@ -523,7 +537,7 @@ function isblockedfile(name: string) {
 }
 async function walkDirectory(
   folder: vscode.Uri,
-): Promise<Record<string, string>> {
+): Promise<Record<string, Uint8Array>> {
   let list = await walk(folder);
   let res = {};
   for (let name of list) {
@@ -535,22 +549,24 @@ async function walkDirectory(
     // logger.info(name);
     if (isblockedfile(name)) continue;
     // logger.info(name);
-    res[name] = new TextDecoder().decode(
+    res[name] = 
       await vscode.workspace.fs.readFile(
         // folder.with({ path: path.join(folder.path, name) }),
         vscode.Uri.joinPath(folder, name.replace(/\\/g, "/")),
-      ),
-    );
+      );
   }
   // logger.info("file list:", list,Object.keys(res));
   return res;
 }
 
 async function buildProject(workspaceUri: vscode.Uri) {
-  let res = await walkDirectory(workspaceUri);
-  // logger.info(JSON.stringify(res))
-  let dao3Conf = JSON.parse(res["dao3.config.json"]);
-  let importMap = res["importMap.arenaless.jsonc"];
+  // let res = await walkDirectory(workspaceUri);
+  // // logger.info(JSON.stringify(res))
+  // let dao3Conf = JSON.parse(res["dao3.config.json"]);
+  // let importMap = res["importMap.arenaless.jsonc"];
+  // use builtin fs directly
+  let dao3Conf=JSON.parse(new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri,"dao3.config.json"))));
+  let importMap = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri,"importMap.arenaless.jsonc")));
   let outputName = (dao3Conf.ArenaPro.outputAndUpdate||[])[0] || "bundle.js";
   let serverBuilder = async () => {
     // server build
@@ -561,16 +577,17 @@ async function buildProject(workspaceUri: vscode.Uri) {
       vscode.Uri.joinPath(workspaceUri, serverPath),
     );
     // add a "/" before them
-    let serverFiles: Record<string, string> = {};
+    let serverFiles: Record<string, Uint8Array> = {};
     for (let key in serverFiles_) {
       serverFiles[key] = serverFiles_[key];
     }
+    // logger.info("serverFiles:" + JSON.stringify(Object.keys(serverFiles)));
     return await build(
       serverFiles,
       serverEntry,
-      serverFiles["tsconfig.json"],
+      new TextDecoder().decode(serverFiles["tsconfig.json"]),
       logger,
-      dao3Conf,
+      // dao3Conf,
       "cjs",
       importMap,
       dao3Conf.ArenaPro.file.typescript.server.development
@@ -583,16 +600,16 @@ async function buildProject(workspaceUri: vscode.Uri) {
     let clientFiles_ = await walkDirectory(
       vscode.Uri.joinPath(workspaceUri, clientPath),
     );
-    let clientFiles: Record<string, string> = {};
+    let clientFiles: Record<string, Uint8Array> = {};
     for (let key in clientFiles_) {
       clientFiles[key] = clientFiles_[key];
     }
     return await build(
       clientFiles,
       clientEntry,
-      clientFiles["tsconfig.json"],
+      new TextDecoder().decode(clientFiles["tsconfig.json"]),
       logger,
-      dao3Conf,
+      // dao3Conf,
       "es",
       importMap,
       dao3Conf.ArenaPro.file.typescript.client.development

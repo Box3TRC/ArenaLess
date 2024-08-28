@@ -2,7 +2,7 @@
   "name": "arenaless",
   "displayName": "ArenaLess",
   "description": "BOX3<->VSCode.dev | WEB powers Box3+TypeScript development!(support vscode.dev)(compatible with ArenaPro)",
-  "version": "0.0.13",
+  "version": "0.0.15",
   "publisher": "tobylai",
   "icon": "arenaless.png",
   "engines": {
@@ -52,6 +52,13 @@
         {
           "command": "arenaless.caiplus.ask_with_code"
         }
+      ],
+      "view/title": [
+        {
+          "command": "submaptree.refreshEntry",
+          "when": "view == submaptree",
+          "group": "navigation"
+        }
       ]
     },
     "viewsContainers": {
@@ -76,9 +83,26 @@
           "name": "CaiPlus AI Chat",
           "type": "webview"
         }
+      ],
+      "scm": [
+        {
+          "id": "submaptree",
+          "name": "ArenaLess 神岛扩展地图"
+        }
       ]
     },
     "commands": [
+      {
+        "command": "submaptree.refreshEntry",
+        "title": "刷新",
+        "icon": "$(refresh)",
+        "enablement": "view == submaptree"
+      },
+      {
+        "command": "submaptree.openMapInBrowser",
+        "title": "submaptree.openMapInBrowser",
+        "category": "_internel-arenaless"
+      },
       {
         "command": "arenaless.activate-ext",
         "title": "激活ArenaLess扩展 (WEB版可能不能自动激活)",
@@ -123,11 +147,13 @@
         "command": "arenaless.caiplus.ask_with_code",
         "title": "携带代码向菜鸡提问",
         "category": "菜鸡AIPlus"
-      },{
-        "command":"arenaless.project.dao3cfg.selectOutputAndUpdate",
-        "title":"选择输出目录并更新配置",
-        "category":"ArenaLess"
-      },{
+      },
+      {
+        "command": "arenaless.project.dao3cfg.selectOutputAndUpdate",
+        "title": "选择输出目录并更新配置",
+        "category": "ArenaLess"
+      },
+      {
         "command": "arenaless.project.openMap",
         "title": "跳转创作端",
         "category": "ArenaLess"
@@ -179,6 +205,7 @@
   },
   "dependencies": {
     "@types/node": "^22.2.0",
+    "arenaless-bundler": "^1.0.7",
     "json-to-ast": "^2.1.0",
     "json5": "^2.2.3",
     "pako": "^2.1.0",
