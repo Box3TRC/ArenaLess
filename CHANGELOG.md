@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.1.2
+- 支持手动更新.d.ts文件了
+
 ## 0.1.1
 - 模板更新了client的`tsconfig.json`的配置
 - 模板增加WebAssembly.d.ts

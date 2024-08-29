@@ -10,26 +10,11 @@ import { ChatWebViewProvider } from "./caiplus/webview";
 import { ungzip } from "pako";
 import { Dao3ConfigCodeLensProvider } from "./codelensProvider";
 import { Box3ExtMapTreeProvider } from "./box3ExtMapTreeProvider";
+import { chooseWorkspace } from "./utils";
+import { updateAllDts } from "./dtsUpdate";
 // import * as relative from "relative";
 
 let logger: vscode.LogOutputChannel | undefined;
-async function chooseWorkspace(): Promise<vscode.WorkspaceFolder | undefined> {
-  let folders: any = vscode.workspace.workspaceFolders;
-  if (!folders) {
-    vscode.window.showErrorMessage("未检测到已打开的工作区");
-    return;
-  }
-  let folder = folders[0];
-  if (folders.length > 1) {
-    folder = await vscode.window.showWorkspaceFolderPick({
-      placeHolder: "请选择要创建项目的文件夹",
-    });
-    if (!folder) return;
-  }
-  logger?.info(`choose workspace:${folder.uri.path}`);
-  return folder;
-}
-
 async function readDao3Config() {
   let folder = await chooseWorkspace();
   if (!folder) return;
@@ -38,12 +23,12 @@ async function readDao3Config() {
     if (!await vscode.workspace.fs.stat(configpath)) {
       // error
       vscode.window.showErrorMessage("dao3.config.json不存在");
-      return {folder,configpath:null};
+      return { folder, configpath: null };
     }
-    return {folder,configpath};
+    return { folder, configpath };
   } catch (e) {
     vscode.window.showErrorMessage("dao3.config.json不存在");
-    return {folder,configpath:null};
+    return { folder, configpath: null };
   }
 }
 
@@ -78,27 +63,27 @@ async function copyTemplate(
 
 let user: Dao3Account | null = null;
 let usercache: any;
-async function checkLogin(immediate:boolean=false) {
+async function checkLogin(immediate: boolean = false) {
   if (!user) return false;
-  if(immediate){
-    try{
-      let data=await user.getUserData();
-      usercache=data;
-      if(!data)return false;
-    }catch(e){
-      usercache=null;
-      logger.error("登录失败",e.message);
+  if (immediate) {
+    try {
+      let data = await user.getUserData();
+      usercache = data;
+      if (!data) return false;
+    } catch (e) {
+      usercache = null;
+      logger.error("登录失败", e.message);
     }
   }
-  setTimeout(async()=>{
-    try{
-      usercache= await user.getUserData();
-    }catch(e){
-      usercache=null;
-      logger.error("登录失败",e.message);
+  setTimeout(async () => {
+    try {
+      usercache = await user.getUserData();
+    } catch (e) {
+      usercache = null;
+      logger.error("登录失败", e.message);
     }
-  },100);
-  if(!usercache)return false;
+  }, 100);
+  if (!usercache) return false;
   return true;
 }
 async function login() {
@@ -146,15 +131,15 @@ export function activate(context: vscode.ExtensionContext) {
     opt,
   );
   // sidebar scm extMap
-  let box3extmaptree=new Box3ExtMapTreeProvider(()=>user);
+  let box3extmaptree = new Box3ExtMapTreeProvider(() => user);
   vscode.window.registerTreeDataProvider(
     "submaptree",
     box3extmaptree
   );
-  context.subscriptions.push(vscode.commands.registerCommand("submaptree.refreshEntry",async()=>{
+  context.subscriptions.push(vscode.commands.registerCommand("submaptree.refreshEntry", async () => {
     box3extmaptree.refresh();
   }));
-  context.subscriptions.push(vscode.commands.registerCommand("submaptree.openMapInBrowser",(editHash:string)=>{
+  context.subscriptions.push(vscode.commands.registerCommand("submaptree.openMapInBrowser", (editHash: string) => {
     vscode.env.openExternal(vscode.Uri.parse(`https://dao3.fun/edit/${editHash}`));
   }));
   let testLogin = async (message = false) => {
@@ -174,7 +159,7 @@ export function activate(context: vscode.ExtensionContext) {
       statusBarIcon.backgroundColor = new vscode.ThemeColor(
         "statusBar.background",
       );
-      if(message){
+      if (message) {
         let token = vscode.workspace.getConfiguration("arenaless.dao3.user").get(
           "userToken",
         );
@@ -240,6 +225,7 @@ export function activate(context: vscode.ExtensionContext) {
       menu["创建ArenaLess项目"] = "arenaless.project.create";
       menu["链接扩展地图"] = "arenaless.project.link";
       menu["构建并上传"] = "arenaless.project.buildNUpload";
+      menu["同步.d.ts声明文件(手动)【ArenaPro提供+ArenaLess扩充】"]="arenaless.project.updateDTS";
       if (loggined) {
         menu["登出"] = "arenaless.dao3.logout";
       }
@@ -452,7 +438,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.languages.registerCodeLensProvider({ language: "json", pattern: "**/dao3.config.json" }, new Dao3ConfigCodeLensProvider(logger)));
   context.subscriptions.push(vscode.commands.registerCommand("arenaless.project.dao3cfg.selectOutputAndUpdate", async () => {
     let { folder, configpath } = await readDao3Config();
-    if(!configpath)return;
+    if (!configpath) return;
     // read
     try {
       let dao3config = JSON.parse(
@@ -463,8 +449,8 @@ export function activate(context: vscode.ExtensionContext) {
       if (!dao3config.ArenaPro.outputAndUpdate || dao3config.ArenaPro.outputAndUpdate.length === 0) {
         dao3config.ArenaPro.outputAndUpdate = ["bundle.js"];
       }
-      let selList=dao3config.ArenaPro.outputAndUpdate;
-      if(!selList.includes("bundle.js")){
+      let selList = dao3config.ArenaPro.outputAndUpdate;
+      if (!selList.includes("bundle.js")) {
         selList.push("bundle.js");
       }
       let selected = await vscode.window.showQuickPick(selList, {
@@ -486,7 +472,7 @@ export function activate(context: vscode.ExtensionContext) {
   }));
   context.subscriptions.push(vscode.commands.registerCommand("arenaless.project.openMap", async () => {
     let { folder, configpath } = await readDao3Config();
-    if(!configpath)return;
+    if (!configpath) return;
     // read
     try {
       let dao3config = JSON.parse(
@@ -494,7 +480,7 @@ export function activate(context: vscode.ExtensionContext) {
           await vscode.workspace.fs.readFile(configpath),
         ),
       );
-      let editHash=dao3config["ArenaPro"]["map"]["editHash"];
+      let editHash = dao3config["ArenaPro"]["map"]["editHash"];
       vscode.env.openExternal(vscode.Uri.parse(`https://dao3.fun/edit/${editHash}`));
     } catch (e) {
       vscode.window.showErrorMessage("dao3.config.json 读取失败");
@@ -502,6 +488,14 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     }
   }));
+  context.subscriptions.push(vscode.commands.registerCommand("arenaless.project.updateDTS", () => {
+    updateAllDts().then(() => {
+      // vscode.window.showInformationMessage("ArenaLess: 已更新所有dts文件");
+    }).catch((e) => {
+      vscode.window.showErrorMessage("ArenaLess: 更新dts文件失败");
+      logger?.error(e);
+    });
+  }))
 }
 
 export async function walk(folder: vscode.Uri): Promise<string[]> {
@@ -549,7 +543,7 @@ async function walkDirectory(
     // logger.info(name);
     if (isblockedfile(name)) continue;
     // logger.info(name);
-    res[name] = 
+    res[name] =
       await vscode.workspace.fs.readFile(
         // folder.with({ path: path.join(folder.path, name) }),
         vscode.Uri.joinPath(folder, name.replace(/\\/g, "/")),
@@ -565,9 +559,9 @@ async function buildProject(workspaceUri: vscode.Uri) {
   // let dao3Conf = JSON.parse(res["dao3.config.json"]);
   // let importMap = res["importMap.arenaless.jsonc"];
   // use builtin fs directly
-  let dao3Conf=JSON.parse(new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri,"dao3.config.json"))));
-  let importMap = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri,"importMap.arenaless.jsonc")));
-  let outputName = (dao3Conf.ArenaPro.outputAndUpdate||[])[0] || "bundle.js";
+  let dao3Conf = JSON.parse(new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri, "dao3.config.json"))));
+  let importMap = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri, "importMap.arenaless.jsonc")));
+  let outputName = (dao3Conf.ArenaPro.outputAndUpdate || [])[0] || "bundle.js";
   let serverBuilder = async () => {
     // server build
     let serverPath = dao3Conf.ArenaPro.file.typescript.server.base;
