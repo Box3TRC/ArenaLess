@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.1.1
+- 模板更新了client的`tsconfig.json`的配置
+- 模板增加WebAssembly.d.ts
+
+## 0.1.0
+- 跟进了AP📦 扩展地图列表：新增扩展地图列表树状图，点击一下可以快速进入附图。
+- 切换到了新打包工具[ArenaLess-Bundler(开源)](https://github.com/Box3TRC/ArenaLess-Bundler)
+
 ## 0.0.15
 - 修复了构建器的一些bug
 - 跟进ArenaPro导入json文件的功能`import foo from "./bar.json"`
