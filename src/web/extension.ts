@@ -495,7 +495,7 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.showErrorMessage("ArenaLess: 更新dts文件失败");
       logger?.error(e);
     });
-  }))
+  }));
 }
 
 export async function walk(folder: vscode.Uri): Promise<string[]> {
@@ -560,7 +560,10 @@ async function buildProject(workspaceUri: vscode.Uri) {
   // let importMap = res["importMap.arenaless.jsonc"];
   // use builtin fs directly
   let dao3Conf = JSON.parse(new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri, "dao3.config.json"))));
-  let importMap = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri, "importMap.arenaless.jsonc")));
+  let importMap = `{"imports":{}}`;
+  try{
+    importMap = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri, "importMap.arenaless.jsonc")));
+  }catch(e){};
   let outputName = (dao3Conf.ArenaPro.outputAndUpdate || [])[0] || "bundle.js";
   let serverBuilder = async () => {
     // server build

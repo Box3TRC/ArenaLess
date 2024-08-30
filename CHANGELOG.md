@@ -1,7 +1,10 @@
 # Change Log
 
+## 0.1.3
+- 构建器现在更好地适配了tsconfig.json
+
 ## 0.1.2
-- 支持手动更新.d.ts文件了
+- 支持手动同步.d.ts文件了
 
 ## 0.1.1
 - 模板更新了client的`tsconfig.json`的配置

@@ -10,7 +10,7 @@ export async function chooseWorkspace(logger?:vscode.LogOutputChannel): Promise<
       folder = await vscode.window.showWorkspaceFolderPick({
         placeHolder: "请选择要创建项目的文件夹",
       });
-      if (!folder) return;
+      if (!folder) {return;}
     }
     logger?.info(`choose workspace:${folder.uri.path}`);
     return folder;
