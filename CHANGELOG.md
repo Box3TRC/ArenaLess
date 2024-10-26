@@ -1,5 +1,20 @@
 # Change Log
 
+## 0.1.7
+- 重构了部分打包代码来支持跨端共享代码，有少量的性能提升。如果有bug请反馈（arenaless-bundler仓库或qq渠道）
+- 支持了跨端共享脚本，详见[ArenaPro文档-跨端共享脚本](https://docs.box3lab.com/arenapro/guide/shares.html)
+- 同步了新的ArenaPro脚手架，包含`shares`跨端共享脚本目录和一些dts
+
+## 0.1.6
+- 修复importMap的bug
+
+## 0.1.5
+- 上传速度恢复正常
+- 现在支持`React JSX/TSX`来写UI了（AP兼容）！详情请看岛研所[dao3-aui](https://github.com/Box3TRC/dao3-aui)项目
+
+## 0.1.4
+- gateway被墙了，现在换了个地址-_-。
+
 ## 0.1.3
 - 构建器现在更好地适配了tsconfig.json
 

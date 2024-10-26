@@ -44,7 +44,7 @@ export class Dao3Account {
   }
   async getUserData() {
     let resp = await fetch(
-      "https://dao3gateway.arenaless-server.trc.tobylai.fun/api/userData",
+      "https://dao3gateway-arenaless-server-trc.tobylai.fun/api/userData",
       {
         method: "POST",
         body: JSON.stringify({
@@ -61,7 +61,7 @@ export class Dao3Account {
   }
   async getExtMaps() {
     let resp = await fetch(
-      "https://dao3gateway.arenaless-server.trc.tobylai.fun/api/maps/extMaps",
+      "https://dao3gateway-arenaless-server-trc.tobylai.fun/api/maps/extMaps",
       {
         method: "POST",
         body: JSON.stringify({
@@ -81,7 +81,7 @@ export class Dao3Account {
     this.logger.info(`uploading with output name ${outputName}`);
     // /api/maps/uploadBuild
     let resp = await fetch(
-      "https://dao3gateway.arenaless-server.trc.tobylai.fun/api/maps/uploadBuild",
+      "https://dao3gateway-arenaless-server-trc.tobylai.fun/api/maps/uploadBuild",
       {
         method: "POST",
         body: JSON.stringify({

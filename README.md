@@ -1,5 +1,6 @@
 # ArenaLess
 > 非官方出品
+> 不保证与ArenaPro的完全兼容
 
 支持VSCode与TypeScript的神岛游戏制作插件
 告别繁琐，拥抱高效！神岛ArenaLess插件，专为游戏开发者设计，旨在通过无缝集成VSCode本地版、[VSCode在线版](https://vscode.dev)与神岛Arena编辑器，为游戏开发带来前所未有的便捷与效率。本插件不仅解决了Arena编辑器功能单一、开发体验不佳的问题，还引入了TypeScript支持，为游戏开发提供更丰富的功能和体验。

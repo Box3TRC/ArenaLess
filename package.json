@@ -1,8 +1,8 @@
 {
   "name": "arenaless",
   "displayName": "ArenaLess",
-  "description": "BOX3<->VSCode.dev | WEB powers Box3+TypeScript development!(support vscode.dev)(compatible with ArenaPro)",
-  "version": "0.1.3",
+  "description": "BOX3开发<->VSCode.dev | WEB powers Box3+TypeScript development!(support vscode.dev)(compatible with ArenaPro)",
+  "version": "0.1.7",
   "publisher": "tobylai",
   "icon": "arenaless.png",
   "engines": {
@@ -210,7 +210,7 @@
   },
   "dependencies": {
     "@types/node": "^22.2.0",
-    "arenaless-bundler": "^1.0.7",
+    "arenaless-bundler": "^1.1.6",
     "js-md5": "^0.8.3",
     "json-to-ast": "^2.1.0",
     "json5": "^2.2.3",
