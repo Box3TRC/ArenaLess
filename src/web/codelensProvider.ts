@@ -61,7 +61,11 @@ export class Dao3ConfigCodeLensProvider implements vscode.CodeLensProvider {
                 title: "[AL]编译输出文件名",
                 command: "arenaless.project.dao3cfg.selectOutputAndUpdate",
                 preprocess(data: any, json: any) {
-                    data.title = `[AL]编译输出文件名: ${json.ArenaPro.outputAndUpdate[0] || "bundle.js"}`;
+                    let name=json.ArenaPro.outputAndUpdate[0];
+                    if(typeof name!=="string"&&typeof name!=="undefined"){
+                        name=name.name;
+                    };
+                    data.title = `[AL]编译输出文件名: ${name || "bundle.js"}`;
                     return data;
                 },
             }],

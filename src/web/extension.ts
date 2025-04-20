@@ -47,17 +47,20 @@ async function copyTemplate(
     });
     // read json
     let data = ungzip(await vscode.workspace.fs.readFile(tplPathUri));
-    let files = JSON.parse(new TextDecoder().decode(data)); //{filepath:text,"aaa/bbb/ccc.txt":"hello"}
-    for (let filepath in files) {
-      let filepathUri = workspaceUri.with({
-        path: workspaceUri.path + "/" + filepath,
-      });
-      await vscode.workspace.fs.writeFile(
-        filepathUri,
-        new TextEncoder().encode(files[filepath]),
-      );
-      logger?.info("copy " + filepath + " to " + filepathUri.path);
-    }
+    await copyTemplateData(data, workspaceUri);
+  }
+}
+async function copyTemplateData(data: any, workspaceUri: vscode.Uri) {
+  let files = JSON.parse(new TextDecoder().decode(data)); //{filepath:text,"aaa/bbb/ccc.txt":"hello"}
+  for (let filepath in files) {
+    let filepathUri = workspaceUri.with({
+      path: workspaceUri.path + "/" + filepath,
+    });
+    await vscode.workspace.fs.writeFile(
+      filepathUri,
+      new TextEncoder().encode(files[filepath]),
+    );
+    logger?.info("copy " + filepath + " to " + filepathUri.path);
   }
 }
 
@@ -190,10 +193,29 @@ export function activate(context: vscode.ExtensionContext) {
         );
         return;
       }
-      try {
-        copyTemplate(context, folder.uri, "base");
-      } catch (e) {
-        logger?.error(e);
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      let createMenu1 = { "创建普通项目(ArenaLess+TS)": "create-base", "使用在线模板……": "create-online" };
+      let act = await vscode.window.showQuickPick(Object.keys(createMenu1));
+      if (!act) return;
+      if (createMenu1[act] === "create-base") {
+        try {
+          copyTemplate(context, folder.uri, "base");
+        } catch (e) {
+          logger?.error(e);
+        }
+      } else if (createMenu1[act] === "create-online") {
+        vscode.window.showInformationMessage("正在获取模板列表……");
+        const url = "https://arenaless-assets.tobylai.fun/templates.json";
+        let resp = await fetch(url);
+        let templates: { name: string, url: string }[] = await resp.json();
+        let selname = await vscode.window.showQuickPick(templates.map(item => item.name),{title:"选择在线模板[ArenaPro使用需要执行`npm install`]",placeHolder:"请选择在线模板 本地使用爆红请npm install"});
+        if (!selname) return;
+        let template = templates.find(item => item.name === selname)!;
+        let templateUrl = new URL(template.url, url);
+        vscode.window.showInformationMessage(`正在下载模板${selname}……`);
+        let resp2 = await fetch(templateUrl);
+        let gzip=await resp2.arrayBuffer();
+        copyTemplateData(ungzip(gzip),folder.uri);
       }
     }),
   );
@@ -224,7 +246,7 @@ export function activate(context: vscode.ExtensionContext) {
       menu["创建ArenaLess项目"] = "arenaless.project.create";
       menu["链接扩展地图"] = "arenaless.project.link";
       menu["构建并上传"] = "arenaless.project.buildNUpload";
-      menu["同步.d.ts声明文件(手动)【ArenaPro提供+ArenaLess扩充】"]="arenaless.project.updateDTS";
+      menu["同步.d.ts声明文件(手动)【ArenaPro提供+ArenaLess扩充】"] = "arenaless.project.updateDTS";
       if (loggined) {
         menu["登出"] = "arenaless.dao3.logout";
       }
@@ -448,7 +470,16 @@ export function activate(context: vscode.ExtensionContext) {
       if (!dao3config.ArenaPro.outputAndUpdate || dao3config.ArenaPro.outputAndUpdate.length === 0) {
         dao3config.ArenaPro.outputAndUpdate = ["bundle.js"];
       }
-      let selList = dao3config.ArenaPro.outputAndUpdate;
+      let selList2conf:Record<string,any>={};
+      let selList = dao3config.ArenaPro.outputAndUpdate.map((x:any)=>{
+        if(typeof x==="string"){
+          selList2conf[x]=x;
+          return x;
+        }else{
+          selList2conf[x.name]=x;
+          return x.name;
+        }
+      });
       if (!selList.includes("bundle.js")) {
         selList.push("bundle.js");
       }
@@ -458,9 +489,9 @@ export function activate(context: vscode.ExtensionContext) {
       });
       if (!selected) return;
       // remove selected
-      dao3config.ArenaPro.outputAndUpdate = dao3config.ArenaPro.outputAndUpdate.filter((item: string) => item !== selected);
+      dao3config.ArenaPro.outputAndUpdate = dao3config.ArenaPro.outputAndUpdate.filter((item: string) => item !== selList2conf[selected]);
       // add selected to the first
-      dao3config.ArenaPro.outputAndUpdate.unshift(selected);
+      dao3config.ArenaPro.outputAndUpdate.unshift(selList2conf[selected]);
       // write config
       await vscode.workspace.fs.writeFile(configpath, new TextEncoder().encode(JSON.stringify(dao3config, null, 4)));
     } catch (e) {

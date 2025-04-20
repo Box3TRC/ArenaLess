@@ -59,6 +59,38 @@ async function walkDirectory(
     return res;
 }
 
+async function prebuild(workspaceUri: vscode.Uri, dao3Conf: any, files: Record<string, Uint8Array>) {
+    const prebuildConf = dao3Conf?.ArenaLess?.prebuild;
+    // console.log(JSON)
+    if (prebuildConf?.enabled) {
+        logger.info("prebuild enabled");
+        let prebuildRes: any = {};
+        if (prebuildConf?.dumpDirPrefixes) {
+            const dumpDirPrefixes: string[] = prebuildConf.dumpDirPrefixes;
+            if (!Array.isArray(dumpDirPrefixes)) { logger.error("prebuild.dumpDirPrefixes must be an array"); };
+            const dumped: Record<string, Record<string, any>> = {};
+            dumpDirPrefixes.forEach((dir) => {
+                dumped[dir] = {};
+            });
+            for (let file in files) {
+                let dir = dumpDirPrefixes.find(dir => file.startsWith(dir));
+                if (!dir) { continue; }
+                let relpath = path.relative(dir, file).replace(/\\/g, "/").replace("./", "");
+                dumped[dir][relpath] = new TextDecoder().decode(files[file]);
+            }
+            prebuildRes["dumpDirPrefixes"] = dumped;
+        }
+        // is not dist folder exists
+        try{
+            await vscode.workspace.fs.stat(vscode.Uri.joinPath(workspaceUri,"shares"));
+        }catch(e){
+            await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(workspaceUri,"shares"));
+        }
+        await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(workspaceUri,"shares", "_arenaless_prebuild.json"),new TextEncoder().encode(JSON.stringify(prebuildRes)));
+        files["shares/_arenaless_prebuild.json"]=new TextEncoder().encode(JSON.stringify(prebuildRes));
+    }
+}
+
 export async function buildProject(workspaceUri: vscode.Uri) {
     // let res = await walkDirectory(workspaceUri);
     // // logger.info(JSON.stringify(res))
@@ -66,14 +98,20 @@ export async function buildProject(workspaceUri: vscode.Uri) {
     // let importMap = res["importMap.arenaless.jsonc"];
     // use builtin fs directly
     let dao3Conf = JSON.parse(new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri, "dao3.config.json"))));
+    dao3Conf.ArenaPro.file.typescript.server.base=dao3Conf.ArenaPro.file.typescript.server.base||"./server";
+    dao3Conf.ArenaPro.file.typescript.client.base=dao3Conf.ArenaPro.file.typescript.client.base||"./client";
     let importMap = `{"imports":{}}`;
     try {
         importMap = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri, "importMap.arenaless.jsonc")));
     } catch (e) { };
     let outputName = (dao3Conf.ArenaPro.outputAndUpdate || [])[0] || "bundle.js";
-
+    if(typeof outputName==="object"){
+        dao3Conf.ArenaPro.file.typescript.server.entry=outputName.serverEntry||dao3Conf.ArenaPro.file.typescript.server.entry;
+        dao3Conf.ArenaPro.file.typescript.client.entry=outputName.clientEntry||dao3Conf.ArenaPro.file.typescript.client.entry;
+        outputName=outputName.name;
+    }
     let files = await walkDirectory(workspaceUri);
-
+    await prebuild(workspaceUri, dao3Conf, files);
     // server build
     let serverBuilder = async () => {
         let serverPath = dao3Conf.ArenaPro.file.typescript.server.base.replace("./", "");

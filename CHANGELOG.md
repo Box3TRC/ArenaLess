@@ -1,5 +1,18 @@
 # Change Log
 
+## 0.2.0
+- 兼容了AP移除`ArenaPro.file.typescript.server/client.base`的修改
+
+## 0.1.9
+- 哦对了，漏了AP的一个更新没更，适配了AP`v0.4.1+`的`自定义编译文件`(dao3.config.json)
+```
+V0.4.1
+📦 自定义编译文件：支持开发者自行定义编译后和上传的文件名称，满足多脚本的需要。
+```
+
+## 0.1.8
+- 新增在线模板，可以迅速搭建Areact,daopy等的脚手架
+
 ## 0.1.7
 - 重构了部分打包代码来支持跨端共享代码，有少量的性能提升。如果有bug请反馈（arenaless-bundler仓库或qq渠道）
 - 支持了跨端共享脚本，详见[ArenaPro文档-跨端共享脚本](https://docs.box3lab.com/arenapro/guide/shares.html)
@@ -10,7 +23,7 @@
 
 ## 0.1.5
 - 上传速度恢复正常
-- 现在支持`React JSX/TSX`来写UI了（AP兼容）！详情请看岛研所[dao3-aui](https://github.com/Box3TRC/dao3-aui)项目
+- 现在支持`React JSX/TSX`来写UI了（AP兼容）！
 
 ## 0.1.4
 - gateway被墙了，现在换了个地址-_-。

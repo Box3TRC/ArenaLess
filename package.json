@@ -2,7 +2,7 @@
   "name": "arenaless",
   "displayName": "ArenaLess",
   "description": "BOX3开发<->VSCode.dev | WEB powers Box3+TypeScript development!(support vscode.dev)(compatible with ArenaPro)",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "publisher": "tobylai",
   "icon": "arenaless.png",
   "engines": {
@@ -181,6 +181,9 @@
     ]
   },
   "scripts": {
+    "pub:vsce":"vsce publish",
+    "pub:ovsx":"npx ovsx publish ",
+    "pub":"npm run pub:vsce && npm run pub:ovsx",
     "test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/extensionTests.js",
     "pretest": "npm run compile-web",
     "vscode:prepublish": "npm run package-web",
@@ -197,6 +200,7 @@
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@types/assert": "^1.5.10",
     "@types/mocha": "^10.0.7",
+    "@types/path-browserify": "^1.0.3",
     "@types/vscode": "^1.75.0",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
     "@typescript-eslint/parser": "^7.11.0",
