@@ -10,6 +10,8 @@
 本插件旨在实现神岛实验室的ArenaPro的核心功能，并且可以在[VSCode在线版 vscode.dev](https://vscode.dev)和本地版上运行。使用vscode.dev链接到Github仓库后，您就可畅享在任何设备的`TypeScript`+`Arena`编程体验。
 
 ## 文档
+了解使用方法？想了解怎么使用其特性？怎样使用npm包等？查看以下文档：
+
 [岛研所ArenaLess文档](https://trc.box3lab.com/docs/arenaless/)
 
 ## 快速上手
