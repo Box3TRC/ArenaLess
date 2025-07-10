@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.2.1
+- 接入统计（实验性）
+
 ## 0.2.0
 - 兼容了AP移除`ArenaPro.file.typescript.server/client.base`的修改
 

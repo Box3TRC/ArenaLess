@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable curly */
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
@@ -136,14 +137,23 @@ export function activate(context: vscode.ExtensionContext) {
   let box3extmaptree = new Box3ExtMapTreeProvider(() => user);
   vscode.window.registerTreeDataProvider(
     "submaptree",
-    box3extmaptree
+    box3extmaptree,
   );
-  context.subscriptions.push(vscode.commands.registerCommand("submaptree.refreshEntry", async () => {
-    box3extmaptree.refresh();
-  }));
-  context.subscriptions.push(vscode.commands.registerCommand("submaptree.openMapInBrowser", (editHash: string) => {
-    vscode.env.openExternal(vscode.Uri.parse(`https://dao3.fun/edit/${editHash}`));
-  }));
+  context.subscriptions.push(
+    vscode.commands.registerCommand("submaptree.refreshEntry", async () => {
+      box3extmaptree.refresh();
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "submaptree.openMapInBrowser",
+      (editHash: string) => {
+        vscode.env.openExternal(
+          vscode.Uri.parse(`https://dao3.fun/edit/${editHash}`),
+        );
+      },
+    ),
+  );
   let testLogin = async (message = false) => {
     if (await login()) {
       logger.info("登录成功");
@@ -151,6 +161,17 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(
           `登录成功！(ID:${usercache.userId})${usercache.nickname}`,
         );
+        try{
+          await fetch("https://box3lab-api.fanhat.cn/dao3lab/arenapro_count",{
+            method: "POST",
+            body: JSON.stringify({
+              userId: usercache.userId,
+              nickname: usercache.nickname+"@al",
+            })
+          });
+        }catch(e){
+          logger.error("lab",e.message);
+        }
       }
       statusBarIcon.tooltip = "ArenaLess(已登录)";
       statusBarIcon.backgroundColor = new vscode.ThemeColor(
@@ -162,12 +183,14 @@ export function activate(context: vscode.ExtensionContext) {
         "statusBar.background",
       );
       if (message) {
-        let token = vscode.workspace.getConfiguration("arenaless.dao3.user").get(
-          "userToken",
-        );
-        let userAgent = vscode.workspace.getConfiguration("arenaless.dao3.user").get(
-          "userAgent",
-        );
+        let token = vscode.workspace.getConfiguration("arenaless.dao3.user")
+          .get(
+            "userToken",
+          );
+        let userAgent = vscode.workspace.getConfiguration("arenaless.dao3.user")
+          .get(
+            "userAgent",
+          );
         if (!token && !userAgent) {
           return;
           // vscode.window.showErrorMessage("请设置Dao3用户信息");
@@ -194,7 +217,10 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      let createMenu1 = { "创建普通项目(ArenaLess+TS)": "create-base", "使用在线模板……": "create-online" };
+      let createMenu1 = {
+        "创建普通项目(ArenaLess+TS)": "create-base",
+        "使用在线模板……": "create-online",
+      };
       let act = await vscode.window.showQuickPick(Object.keys(createMenu1));
       if (!act) return;
       if (createMenu1[act] === "create-base") {
@@ -207,15 +233,21 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage("正在获取模板列表……");
         const url = "https://arenaless-assets.tobylai.fun/templates.json";
         let resp = await fetch(url);
-        let templates: { name: string, url: string }[] = await resp.json();
-        let selname = await vscode.window.showQuickPick(templates.map(item => item.name),{title:"选择在线模板[ArenaPro使用需要执行`npm install`]",placeHolder:"请选择在线模板 本地使用爆红请npm install"});
+        let templates: { name: string; url: string }[] = await resp.json();
+        let selname = await vscode.window.showQuickPick(
+          templates.map((item) => item.name),
+          {
+            title: "选择在线模板[ArenaPro使用需要执行`npm install`]",
+            placeHolder: "请选择在线模板 本地使用爆红请npm install",
+          },
+        );
         if (!selname) return;
-        let template = templates.find(item => item.name === selname)!;
+        let template = templates.find((item) => item.name === selname)!;
         let templateUrl = new URL(template.url, url);
         vscode.window.showInformationMessage(`正在下载模板${selname}……`);
         let resp2 = await fetch(templateUrl);
-        let gzip=await resp2.arrayBuffer();
-        copyTemplateData(ungzip(gzip),folder.uri);
+        let gzip = await resp2.arrayBuffer();
+        copyTemplateData(ungzip(gzip), folder.uri);
       }
     }),
   );
@@ -246,7 +278,8 @@ export function activate(context: vscode.ExtensionContext) {
       menu["创建ArenaLess项目"] = "arenaless.project.create";
       menu["链接扩展地图"] = "arenaless.project.link";
       menu["构建并上传"] = "arenaless.project.buildNUpload";
-      menu["同步.d.ts声明文件(手动)【ArenaPro提供+ArenaLess扩充】"] = "arenaless.project.updateDTS";
+      menu["同步.d.ts声明文件(手动)【ArenaPro提供+ArenaLess扩充】"] =
+        "arenaless.project.updateDTS";
       if (loggined) {
         menu["登出"] = "arenaless.dao3.logout";
       }
@@ -401,7 +434,7 @@ export function activate(context: vscode.ExtensionContext) {
             id.toString(),
             buildRes.server_bundle,
             buildRes.client_bundle,
-            buildRes.outputName
+            buildRes.outputName,
           );
           if (success) {
             vscode.window.showInformationMessage(
@@ -412,6 +445,28 @@ export function activate(context: vscode.ExtensionContext) {
           }
         } catch (e) {
           logger?.error(e);
+        }
+        try {
+          if (
+            usercache && usercache.userId && usercache.nickname
+          ) {
+            await fetch(
+              "https://box3lab-api.fanhat.cn/dao3lab/arenapro_building_count",
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  type: 1,
+                  userid: usercache.userId,
+                  name: usercache.nickname + "@al",
+                  mapid: id.toString(),
+                  buildingTime: ((Date.now() - startTime) / 1000).toFixed(2) +
+                    "s",
+                }),
+              },
+            );
+          }
+        } catch (e) {
+          logger?.error("lab",e);
         }
       },
     ),
@@ -433,7 +488,7 @@ export function activate(context: vscode.ExtensionContext) {
     ),
   );
   context.subscriptions.push(
-    vscode.commands.registerCommand("arenaless.activate-ext", () => { }),
+    vscode.commands.registerCommand("arenaless.activate-ext", () => {}),
   );
   // logout
   context.subscriptions.push(
@@ -456,78 +511,106 @@ export function activate(context: vscode.ExtensionContext) {
     }),
   );
   // Code Lens for dao3.config.json
-  context.subscriptions.push(vscode.languages.registerCodeLensProvider({ language: "json", pattern: "**/dao3.config.json" }, new Dao3ConfigCodeLensProvider(logger)));
-  context.subscriptions.push(vscode.commands.registerCommand("arenaless.project.dao3cfg.selectOutputAndUpdate", async () => {
-    let { folder, configpath } = await readDao3Config();
-    if (!configpath) return;
-    // read
-    try {
-      let dao3config = JSON.parse(
-        new TextDecoder().decode(
-          await vscode.workspace.fs.readFile(configpath),
-        ),
-      );
-      if (!dao3config.ArenaPro.outputAndUpdate || dao3config.ArenaPro.outputAndUpdate.length === 0) {
-        dao3config.ArenaPro.outputAndUpdate = ["bundle.js"];
-      }
-      let selList2conf:Record<string,any>={};
-      let selList = dao3config.ArenaPro.outputAndUpdate.map((x:any)=>{
-        if(typeof x==="string"){
-          selList2conf[x]=x;
-          return x;
-        }else{
-          selList2conf[x.name]=x;
-          return x.name;
+  context.subscriptions.push(
+    vscode.languages.registerCodeLensProvider({
+      language: "json",
+      pattern: "**/dao3.config.json",
+    }, new Dao3ConfigCodeLensProvider(logger)),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "arenaless.project.dao3cfg.selectOutputAndUpdate",
+      async () => {
+        let { folder, configpath } = await readDao3Config();
+        if (!configpath) return;
+        // read
+        try {
+          let dao3config = JSON.parse(
+            new TextDecoder().decode(
+              await vscode.workspace.fs.readFile(configpath),
+            ),
+          );
+          if (
+            !dao3config.ArenaPro.outputAndUpdate ||
+            dao3config.ArenaPro.outputAndUpdate.length === 0
+          ) {
+            dao3config.ArenaPro.outputAndUpdate = ["bundle.js"];
+          }
+          let selList2conf: Record<string, any> = {};
+          let selList = dao3config.ArenaPro.outputAndUpdate.map((x: any) => {
+            if (typeof x === "string") {
+              selList2conf[x] = x;
+              return x;
+            } else {
+              selList2conf[x.name] = x;
+              return x.name;
+            }
+          });
+          if (!selList.includes("bundle.js")) {
+            selList.push("bundle.js");
+          }
+          let selected = await vscode.window.showQuickPick(selList, {
+            canPickMany: false,
+            title: "选择编译输出文件名",
+          });
+          if (!selected) {
+            return;
+          }
+          // remove selected
+          dao3config.ArenaPro.outputAndUpdate = dao3config.ArenaPro
+            .outputAndUpdate.filter((item: string) =>
+              item !== selList2conf[selected]
+            );
+          // add selected to the first
+          dao3config.ArenaPro.outputAndUpdate.unshift(selList2conf[selected]);
+          // write config
+          await vscode.workspace.fs.writeFile(
+            configpath,
+            new TextEncoder().encode(JSON.stringify(dao3config, null, 4)),
+          );
+        } catch (e) {
+          vscode.window.showErrorMessage(
+            "dao3.config.json outputAndUpdate 读取失败",
+          );
+          logger?.error(e);
+          return;
         }
-      });
-      if (!selList.includes("bundle.js")) {
-        selList.push("bundle.js");
+      },
+    ),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("arenaless.project.openMap", async () => {
+      let { folder, configpath } = await readDao3Config();
+      if (!configpath) return;
+      // read
+      try {
+        let dao3config = JSON.parse(
+          new TextDecoder().decode(
+            await vscode.workspace.fs.readFile(configpath),
+          ),
+        );
+        let editHash = dao3config["ArenaPro"]["map"]["editHash"];
+        vscode.env.openExternal(
+          vscode.Uri.parse(`https://dao3.fun/edit/${editHash}`),
+        );
+      } catch (e) {
+        vscode.window.showErrorMessage("dao3.config.json 读取失败");
+        logger?.error(e);
+        return;
       }
-      let selected = await vscode.window.showQuickPick(selList, {
-        canPickMany: false,
-        title: "选择编译输出文件名",
+    }),
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand("arenaless.project.updateDTS", () => {
+      updateAllDts().then(() => {
+        // vscode.window.showInformationMessage("ArenaLess: 已更新所有dts文件");
+      }).catch((e) => {
+        vscode.window.showErrorMessage("ArenaLess: 更新dts文件失败");
+        logger?.error(e);
       });
-      if (!selected) return;
-      // remove selected
-      dao3config.ArenaPro.outputAndUpdate = dao3config.ArenaPro.outputAndUpdate.filter((item: string) => item !== selList2conf[selected]);
-      // add selected to the first
-      dao3config.ArenaPro.outputAndUpdate.unshift(selList2conf[selected]);
-      // write config
-      await vscode.workspace.fs.writeFile(configpath, new TextEncoder().encode(JSON.stringify(dao3config, null, 4)));
-    } catch (e) {
-      vscode.window.showErrorMessage("dao3.config.json outputAndUpdate 读取失败");
-      logger?.error(e);
-      return;
-    }
-  }));
-  context.subscriptions.push(vscode.commands.registerCommand("arenaless.project.openMap", async () => {
-    let { folder, configpath } = await readDao3Config();
-    if (!configpath) return;
-    // read
-    try {
-      let dao3config = JSON.parse(
-        new TextDecoder().decode(
-          await vscode.workspace.fs.readFile(configpath),
-        ),
-      );
-      let editHash = dao3config["ArenaPro"]["map"]["editHash"];
-      vscode.env.openExternal(vscode.Uri.parse(`https://dao3.fun/edit/${editHash}`));
-    } catch (e) {
-      vscode.window.showErrorMessage("dao3.config.json 读取失败");
-      logger?.error(e);
-      return;
-    }
-  }));
-  context.subscriptions.push(vscode.commands.registerCommand("arenaless.project.updateDTS", () => {
-    updateAllDts().then(() => {
-      // vscode.window.showInformationMessage("ArenaLess: 已更新所有dts文件");
-    }).catch((e) => {
-      vscode.window.showErrorMessage("ArenaLess: 更新dts文件失败");
-      logger?.error(e);
-    });
-  }));
+    }),
+  );
 }
 
-
 // This method is called when your extension is deactivated
-export function deactivate() { }
+export function deactivate() {}
