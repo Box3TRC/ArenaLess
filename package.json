@@ -26,8 +26,7 @@
   ],
   "activationEvents": [
     "onCommand:arenaless.activate-ext",
-    "workspaceContains:dao3.config.json",
-    "onView:caiplusaichat"
+    "workspaceContains:dao3.config.json"
   ],
   "browser": "./dist/web/extension.js",
   "contributes": {
@@ -40,19 +39,6 @@
       }
     ],
     "menus": {
-      "editor/context": [
-        {
-          "title": "菜鸡AIPlus",
-          "submenu": "caiplus-menu",
-          "group": "2_cosy",
-          "when": "editorLangId == typescript || editorLangId == javascript && arenaless.activated && editorHasSelection"
-        }
-      ],
-      "caiplus-menu": [
-        {
-          "command": "arenaless.caiplus.ask_with_code"
-        }
-      ],
       "view/title": [
         {
           "command": "submaptree.refreshEntry",
@@ -62,28 +48,10 @@
       ]
     },
     "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "caiplus-container",
-          "title": "CaiPlus AI",
-          "icon": "resources/caiplus.svg"
-        }
-      ]
+      "activitybar": []
     },
-    "submenus": [
-      {
-        "id": "caiplus-menu",
-        "label": "菜鸡AIPlus"
-      }
-    ],
+    "submenus": [],
     "views": {
-      "caiplus-container": [
-        {
-          "id": "caiplusaichat",
-          "name": "CaiPlus AI Chat",
-          "type": "webview"
-        }
-      ],
       "scm": [
         {
           "id": "submaptree",
@@ -142,11 +110,6 @@
         "command": "arenaless.project.buildNUpload",
         "title": "构建并上传项目",
         "category": "ArenaLess"
-      },
-      {
-        "command": "arenaless.caiplus.ask_with_code",
-        "title": "携带代码向菜鸡提问",
-        "category": "菜鸡AIPlus"
       },
       {
         "command": "arenaless.project.dao3cfg.selectOutputAndUpdate",

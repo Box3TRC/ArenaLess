@@ -28,13 +28,13 @@ export function activate(context: vscode.ExtensionContext) {
     registerAuthCommands(context);
 
     // sidebar panel caiplus
-    const webviewProvider = new ChatWebViewProvider(context, logger);
-    let opt = { webviewOptions: { retainContextWhenHidden: true } };
-    vscode.window.registerWebviewViewProvider(
-        "caiplusaichat",
-        webviewProvider,
-        opt,
-    );
+    // const webviewProvider = new ChatWebViewProvider(context, logger);
+    // let opt = { webviewOptions: { retainContextWhenHidden: true } };
+    // vscode.window.registerWebviewViewProvider(
+    //     "caiplusaichat",
+    //     webviewProvider,
+    //     opt,
+    // );
 
     // sidebar extMap
     let box3extmaptree = new Box3ExtMapTreeProvider(() => user);
@@ -86,24 +86,24 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     // CaiPlus命令
-    context.subscriptions.push(
-        vscode.commands.registerCommand(
-            "arenaless.caiplus.ask_with_code",
-            async () => {
-                webviewProvider.show();
-                let editor = vscode.window.activeTextEditor;
-                if (!editor) {
-                    return;
-                }
-                let doc = editor.document;
-                let text = doc.getText(editor.selection);
-                webviewProvider.sendMessage({
-                    "code": text,
-                    "action": "ask_with_code",
-                });
-            },
-        ),
-    );
+    // context.subscriptions.push(
+    //     vscode.commands.registerCommand(
+    //         "arenaless.caiplus.ask_with_code",
+    //         async () => {
+    //             webviewProvider.show();
+    //             let editor = vscode.window.activeTextEditor;
+    //             if (!editor) {
+    //                 return;
+    //             }
+    //             let doc = editor.document;
+    //             let text = doc.getText(editor.selection);
+    //             webviewProvider.sendMessage({
+    //                 "code": text,
+    //                 "action": "ask_with_code",
+    //             });
+    //         },
+    //     ),
+    // );
 
     context.subscriptions.push(
         vscode.commands.registerCommand("arenaless.activate-ext", () => {}),
