@@ -114,6 +114,10 @@ export async function buildProject(workspaceUri: vscode.Uri) {
         dao3Conf.ArenaPro.file.typescript.client.entry=outputName.clientEntry||dao3Conf.ArenaPro.file.typescript.client.entry;
         outputName=outputName.name;
     }
+    let overrideDev=false;
+    if(dao3Conf.ArenaPro.file.typescript.developmentAll!==undefined&&dao3Conf.ArenaPro.file.typescript.developmentAll!==null){
+        overrideDev=true;
+    }
     let files = await walkDirectory(workspaceUri);
     await prebuild(workspaceUri, dao3Conf, files);
     // server build
@@ -130,7 +134,7 @@ export async function buildProject(workspaceUri: vscode.Uri) {
             logger,
             "cjs",
             importMap,
-            dao3Conf.ArenaPro.file.typescript.server.development,
+            (overrideDev?dao3Conf.ArenaPro.file.typescript.developmentAll:dao3Conf.ArenaPro.file.typescript.server.development),
             serverPath + "/"
         );
     };
@@ -147,7 +151,7 @@ export async function buildProject(workspaceUri: vscode.Uri) {
             logger,
             "esm",
             importMap,
-            dao3Conf.ArenaPro.file.typescript.client.development,
+            (overrideDev?dao3Conf.ArenaPro.file.typescript.developmentAll:dao3Conf.ArenaPro.file.typescript.client.development),
             clientPath + "/"
         );
     };
