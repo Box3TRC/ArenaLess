@@ -14,7 +14,7 @@ export function getNonce() {
 export class ChatWebViewProvider implements vscode.WebviewViewProvider{
     extentionContext: vscode.ExtensionContext;
     logger:vscode.LogOutputChannel;
-    webviewView:vscode.WebviewView;
+    webviewView:vscode.WebviewView | undefined;
     constructor(extentionContext: vscode.ExtensionContext,logger:vscode.LogOutputChannel){
         this.extentionContext=extentionContext;
         this.logger=logger;
@@ -36,9 +36,9 @@ export class ChatWebViewProvider implements vscode.WebviewViewProvider{
         this.webviewView=webviewView;
     }
     sendMessage(data:any) {
-        this.webviewView.webview.postMessage(data);
+        this.webviewView!.webview.postMessage(data);
     }
     show(){
-        this.webviewView.show();
+        this.webviewView!.show();
     }
 }

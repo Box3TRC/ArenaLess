@@ -4,7 +4,7 @@ export class Dao3Account {
   token: string;
   userAgent: string;
   logger: vscode.LogOutputChannel;
-  constructor(token, userAgent,logger) {
+  constructor(token:string, userAgent:string, logger:vscode.LogOutputChannel) {
     this.token = token;
     this.userAgent = userAgent;
     this.logger = logger;

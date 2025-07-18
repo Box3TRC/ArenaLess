@@ -36,7 +36,7 @@
         "fileMatch": [
           "/dao3.config.json"
         ],
-        "url": "https://gist.githubusercontent.com/helloyork/f859765899f5072bcdf8cf3526ed22ed/raw/0cc971bcc3f0f331204144712dddf6dfa7f97e12/package-schema.json"
+        "url": "https://gitee.com/toby_lai/arena-vscode-plugin-esbuild-fork/raw/master/schemas/dao3.config-schemas.json"
       }
     ],
     "menus": {
@@ -181,9 +181,9 @@
     ]
   },
   "scripts": {
-    "pub:vsce":"vsce publish",
-    "pub:ovsx":"npx ovsx publish ",
-    "pub":"npm run pub:vsce && npm run pub:ovsx",
+    "pub:vsce": "vsce publish",
+    "pub:ovsx": "npx ovsx publish ",
+    "pub": "npm run pub:vsce && npm run pub:ovsx",
     "test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/extensionTests.js",
     "pretest": "npm run compile-web",
     "vscode:prepublish": "npm run package-web",
@@ -199,7 +199,9 @@
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@types/assert": "^1.5.10",
+    "@types/json-to-ast": "^2.1.4",
     "@types/mocha": "^10.0.7",
+    "@types/pako": "^2.0.3",
     "@types/path-browserify": "^1.0.3",
     "@types/vscode": "^1.75.0",
     "@typescript-eslint/eslint-plugin": "^7.14.1",
@@ -214,7 +216,7 @@
   },
   "dependencies": {
     "@types/node": "^22.2.0",
-    "arenaless-bundler": "^1.1.6",
+    "arenaless-bundler": "^1.1.7",
     "js-md5": "^0.8.3",
     "json-to-ast": "^2.1.0",
     "json5": "^2.2.3",

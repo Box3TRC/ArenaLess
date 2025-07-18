@@ -2,22 +2,9 @@
 import * as vscode from "vscode";
 import parsejast from "json-to-ast";
 
-// function getLoc(astres:any,path:Array<string>){
-//     let curpath=[];
-//     for(let i in astres.children){
-//         if(astres.children[i].key.value===path[0]){
-//             curpath.push(astres.children[i].key);
-//             if(path.length>1){
-//                 return getLoc(astres.children[i],path.slice(1));
-//             }else{
-//                 return curpath;
-//             }
-//         }
-//     }
-// }// wrong code
 function getLoc(astres: any, path: Array<string>) {
     //   console.log(JSON.stringify(astres, null, 4));
-    let que = [];
+    let que:{astres: any, nextpath: number}[] = [];
     // find first
     let findRes = (astres: any, name: string) => {
         for (let i in astres.children) {
@@ -36,6 +23,9 @@ function getLoc(astres: any, path: Array<string>) {
     que.push({ astres: findRes(astres, path[0]), nextpath: 1 });
     while (que.length > 0) {
         let cur = que.shift();
+        if (!cur) {
+            continue;
+        }
         if (cur.nextpath === path.length) {
             return cur.astres.loc;
         }
@@ -71,7 +61,7 @@ export class Dao3ConfigCodeLensProvider implements vscode.CodeLensProvider {
             }],
         };
     logger: vscode.LogOutputChannel;
-    constructor(logger) {
+    constructor(logger: vscode.LogOutputChannel) {
         this.logger = logger;
     }
     resolveCodeLens(
@@ -119,7 +109,7 @@ export class Dao3ConfigCodeLensProvider implements vscode.CodeLensProvider {
             }
             return codeLenses;
         } catch (e) {
-            this.logger.warn("警告:dao3.config.json格式错误",e.toString());
+            this.logger.warn("警告:dao3.config.json格式错误", (e as any).toString());
         }
         return [];
     }

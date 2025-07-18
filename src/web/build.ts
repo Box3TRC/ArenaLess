@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { build } from "arenaless-bundler";
 import * as path from "path-browserify";
 import { logger } from "./logger";
+import { isFileExists } from "./utils";
 
 const BLOCKED_STARTSWITHS = [
     ".git/",
@@ -39,7 +40,7 @@ async function walkDirectory(
     folder: vscode.Uri,
 ): Promise<Record<string, Uint8Array>> {
     let list = await walk(folder);
-    let res = {};
+    let res:Record<string,any> = {};
     for (let name of list) {
         // logger.info(name);
         name = path.relative(folder.path, name).replace(/\\/g, "/").replace(
@@ -102,7 +103,10 @@ export async function buildProject(workspaceUri: vscode.Uri) {
     dao3Conf.ArenaPro.file.typescript.client.base=dao3Conf.ArenaPro.file.typescript.client.base||"./client";
     let importMap = `{"imports":{}}`;
     try {
-        importMap = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri, "importMap.arenaless.jsonc")));
+        if(await isFileExists(vscode.Uri.joinPath(workspaceUri, "importMap.arenaless.json"))){
+            importMap = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri, "importMap.arenaless.json")));
+        }
+        else {importMap = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(workspaceUri, "importMap.arenaless.jsonc")));}
     } catch (e) { };
     let outputName = (dao3Conf.ArenaPro.outputAndUpdate || [])[0] || "bundle.js";
     if(typeof outputName==="object"){
@@ -158,64 +162,4 @@ export async function buildProject(workspaceUri: vscode.Uri) {
         client_bundle: clientBundle,
         outputName
     };
-
-    // let serverBuilder = async () => {
-    //     // server build
-    //     let serverPath = dao3Conf.ArenaPro.file.typescript.server.base;
-    //     let serverEntry = dao3Conf.ArenaPro.file.typescript.server.entry;
-    //     logger.info("serverPath:" + serverPath + " serverEntry:" + serverEntry);
-    //     let serverFiles_ = await walkDirectory(
-    //         vscode.Uri.joinPath(workspaceUri, serverPath),
-    //     );
-    //     // add a "/" before them
-    //     let serverFiles: Record<string, Uint8Array> = {};
-    //     for (let key in serverFiles_) {
-    //         serverFiles[key] = serverFiles_[key];
-    //     }
-    //     // logger.info("serverFiles:" + JSON.stringify(Object.keys(serverFiles)));
-    //     return await build(
-    //         serverFiles,
-    //         serverEntry,
-    //         new TextDecoder().decode(serverFiles["tsconfig.json"]),
-    //         logger,
-    //         // dao3Conf,
-    //         "cjs",
-    //         importMap,
-    //         dao3Conf.ArenaPro.file.typescript.server.development
-    //     );
-    // };
-    // let clientBuilder = async () => {
-    //     let clientPath = dao3Conf.ArenaPro.file.typescript.client.base;
-    //     let clientEntry = dao3Conf.ArenaPro.file.typescript.client.entry;
-    //     logger.info("clientPath:" + clientPath + " clientEntry:" + clientEntry);
-    //     let clientFiles_ = await walkDirectory(
-    //         vscode.Uri.joinPath(workspaceUri, clientPath),
-    //     );
-    //     let clientFiles: Record<string, Uint8Array> = {};
-    //     for (let key in clientFiles_) {
-    //         clientFiles[key] = clientFiles_[key];
-    //     }
-    //     console.log(Object.keys(clientFiles));
-    //     return await build(
-    //         clientFiles,
-    //         clientEntry,
-    //         new TextDecoder().decode(clientFiles["tsconfig.json"]),
-    //         logger,
-    //         // dao3Conf,
-    //         "es",
-    //         importMap,
-    //         dao3Conf.ArenaPro.file.typescript.client.development
-    //     );
-    // };
-    // let [serverBundle, clientBundle] = await Promise.all([
-    //     serverBuilder(),
-    //     clientBuilder(),
-    // ]);
-    // return {
-    //     // eslint-disable-next-line @typescript-eslint/naming-convention
-    //     server_bundle: serverBundle,
-    //     // eslint-disable-next-line @typescript-eslint/naming-convention
-    //     client_bundle: clientBundle,
-    //     outputName
-    // };
 }

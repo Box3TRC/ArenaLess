@@ -16,3 +16,11 @@ export async function chooseWorkspace(logger?:vscode.LogOutputChannel): Promise<
     return folder;
   }
   
+export async function isFileExists(file:vscode.Uri) {
+  try{
+    await vscode.workspace.fs.stat(file);
+    return true;
+  }catch(e){
+    return false;
+  }
+}

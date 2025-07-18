@@ -3,8 +3,8 @@ import os
 import fnmatch
 import json
 
-folder="../arenaless-templates/daopy"
-output="../arenaless-templates/daopy.json.gzip"
+folder="../arenaless-templates/base"
+output="../arenaless-templates/base.json.gzip"
 tplFiles={}
 ignoreGlobs=[
     "node_modules/*",

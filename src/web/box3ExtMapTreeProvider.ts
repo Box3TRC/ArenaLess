@@ -3,7 +3,7 @@ import { Dao3Account } from './account';
 
 export class Box3ExtMapTreeProvider implements vscode.TreeDataProvider<Box3Map> {
     accountFunc: Function;
-    account: Dao3Account | null;
+    account: Dao3Account | null=null;
     private _onDidChangeTreeData: vscode.EventEmitter<Box3Map | undefined | null | void> = new vscode.EventEmitter<Box3Map | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<Box3Map | undefined | null | void> = this._onDidChangeTreeData.event;
     constructor(accountFunc: Function) {
@@ -22,14 +22,14 @@ export class Box3ExtMapTreeProvider implements vscode.TreeDataProvider<Box3Map> 
         }
     }
     async loadExtMaps() {
-        let extmaps: any[] = await this.account.getExtMaps();
+        let extmaps: any[] = await this.account!.getExtMaps();
         let box3maps = [];
         for (let m of extmaps) {
-            let name = m.name;
+            let {name} = m;
             let mapId = m.id.toString();
-            let editHash = m.editHash;
+            let {editHash} = m;
             let desc = m.describe;
-            let subMaps = m.subMaps;
+            let {subMaps} = m;
             if (subMaps.length > 1) {
                 let children = [];
                 for (let s of subMaps) {
