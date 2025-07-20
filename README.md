@@ -1,6 +1,9 @@
 # ArenaLess
 > 非官方出品
+
 > 不保证与ArenaPro的完全兼容
+
+> 图标由 @NaHCO3-code（小苏打） 绘制
 
 支持VSCode与TypeScript的神岛游戏制作插件
 告别繁琐，拥抱高效！神岛ArenaLess插件，专为游戏开发者设计，旨在通过无缝集成VSCode本地版、[VSCode在线版](https://vscode.dev)与神岛Arena编辑器，为游戏开发带来前所未有的便捷与效率。本插件不仅解决了Arena编辑器功能单一、开发体验不佳的问题，还引入了TypeScript支持，为游戏开发提供更丰富的功能和体验。
@@ -36,24 +39,28 @@ ArenaLess: 创建ArenaLess项目
 ## 常见问题
 ### 我想用npm的包，怎么办？
 由于`ArenaLess`是为了兼容`vscode web版(vscode.dev)`设计的，在这种环境里，npm是无法使用的。所以ArenaLess引入了一种新的方法：支持从网络引入库，支持`npm:`前缀。
-```typescript
-// 网络引用库
-import ... from 'https://xxxxx/xxxx';
 
-// 那npm怎么办呢？ArenaLess提供了一个npm:前缀，这个前缀就是下面esm.sh链接的缩写
-// 前缀列表可以在后面看
+网络引用库
+```ts
+import ... from 'https://xxxxx/xxxx';
+```
+那npm怎么办呢？ArenaLess提供了一个npm:前缀，这个前缀就是下面esm.sh链接的缩写
+前缀列表可以在后面看
+```ts
 import ... from "npm:xxx"
 import ... from "npm:xxx@1.0.0"//版本号
 import ... from "npm:yyy/路径"
-
-// esm.sh 是一个将npm/jsr/gh上的包转换为es格式的cdn服务
-// 以下的用法都可用，在导入的后面你还可以增加路径以导入某个特定的文件。
+```
+esm.sh 是一个将npm/jsr/gh上的包转换为es格式的cdn服务
+以下的用法都可用，在导入的后面你还可以增加路径以导入某个特定的文件。
+```ts
 import ... from "https://esm.sh/npm的包名";
 import ... from "https://esm.sh/npm的包名(@版本号)";// https://esm.sh/PKG@SEMVER[/PATH]
 import ... from "https://esm.sh/gh/OWNER/REPO[@TAG]/PATH"// github的也可以
 import ... from "https://esm.sh/jsr/OWNER/REPO[@TAG]/PATH"// jsr.io的也可以
-
-// 比如说我想用JSON5来解析有注释的JSON文件
+```
+比如说我想用JSON5来解析有注释的JSON文件
+```ts
 import JSON5 from "https://esm.sh/json5";
 import JSON5 from "npm:json5";// 也可以
 const json=JSON5.parse(`{
@@ -64,19 +71,19 @@ const json=JSON5.parse(`{
 
 #### 为什么编辑器提示红色了？
 因为TypeScript语言支持并不支持网络导入，但是ArenaLess修改了打包器的逻辑实现了此功能。如果你看不惯这个红色提示的的话，在这行之上加一行`// @ts-ignore`即可。
+- 现在还可以安装Deno插件，这样就不会报红了
 ```typescript
 // @ts-ignore
 import JSON5 from "https://esm.sh/json5";
 ```
 
 ### 网络导入/前缀导入没法兼容ArenaPro怎么办？！
-细心的用户可以发现，根目录下有一个`importMap.arenaless.jsonc`，这是用来指定ArenaLess专属导入库的别名的。
+细心的用户可以发现，根目录下有一个`importMap.arenaless.json`，这是用来指定ArenaLess专属导入库的别名的。
 通过它我们就可以实现兼容。
-```jsonc
+```json
 {
     "imports":{
         "包名":"导入的地址/带前缀符号的包",
-        // 例子
         "json5":"npm:json5"
     }
 }
@@ -98,6 +105,7 @@ import JSON5 from "json5";// 由于你上面制定了了json5的别名，所以�
     ArenaLess-Server是一个神岛API的简单封装，由岛研所托管。我们不会收集用户数据，仅包含API封装。
 ### 鸣谢
 - 感谢@冷鱼闲风大佬的指点。
+- 感谢@NaHCO3-code（小苏打）绘制的logo
 - 感谢原ArenaPro项目。
 - 感谢神岛实验室。
 - 感谢神奇代码岛。

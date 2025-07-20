@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.2.2
+- 兼容了 `developmentAll` 属性
+- 更换了新的 json schema
+- 重构了项目结构，如果你遇到bug了跟我说。
+- 清理了大量屎山代码
+- 现在`arenaless.importmap.jsonc`已经弃用，改为`arenaless.importmap.json`，原来的jsonc模式依然兼容但不再维护
+- 更新了新建项目模板
+- 模板添加了deno.json等的支持，这样再安装`Deno`插件的时候就会出现第三方库的提示
+- 更换了 @NaHCO3-code（小苏打） 绘制的新logo
+
 ## 0.2.1
 - 接入统计（实验性）
 
